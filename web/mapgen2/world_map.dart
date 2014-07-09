@@ -1,8 +1,7 @@
 part of mapgen2;
 
-import "delaunay/delaunay.dart" as dalaunay;
 
-class Map {
+class WorldMap {
     static num LAKE_THRESHOLD = 0.3;  // 0 to 1, fraction of water corners for water polygon
 
     // Passed in by the caller:
@@ -18,7 +17,7 @@ class Map {
     // initial map upon loading is always deterministic, but
     // subsequent maps reset this random number generator with a
     // random seed.
-    Random mapRandom = new Random();
+    PM_PRNG mapRandom = new PM_PRNG();
     bool needsMoreRandomness; // see comment in PointSelector
 
     // Point selection is random for the original article, with Lloyd
@@ -36,7 +35,7 @@ class Map {
     List<Corner> corners;
     List<Edge> edges;
 
-    Map(num size) {
+    WorldMap(num size) {
       SIZE = size;
       numPoints = 1;
       reset();
@@ -97,11 +96,11 @@ class Map {
     }
       
 
-    go(first:int, last:int) {
-      stages:Array = [];
+    go(int first, int last) {
+      List stages = [];
 
       timeIt(String name, Function fn) {
-        t:Number = getTimer();
+        num t = getTimer();
         fn();
       }
       
@@ -301,14 +300,14 @@ class Map {
       // nearby buckets. When we fail to find one, we'll create a new
       // Corner object.
       _cornerMap:Array = [];
-      makeCorner(Point point):Corner {
+      Corner makeCorner(Point point) {
         Corner q;
         
         if (point == null) return null;
-        for (bucket:int = int(point.x)-1; bucket <= int(point.x)+1; bucket++) {
+        for (int bucket = int(point.x)-1; bucket <= int(point.x)+1; bucket++) {
           for(q in _cornerMap[bucket]) {
-              dx:Number = point.x - q.point.x;
-              dy:Number = point.y - q.point.y;
+              dnum x = point.x - q.point.x;
+              dnum y = point.y - q.point.y;
               if (dx*dx + dy*dy < 1e-6) {
                 return q;
               }
@@ -331,14 +330,14 @@ class Map {
 
       // Helper s for the following for loop; ideally these
       // would be inlined
-      addToCornerList(v:List<Corner>, x:Corner) {
+      addToCornerList(List<Corner> v, Corner x) {
         if (x != null && v.indexOf(x) < 0) { v.push(x); }
       }
-      addToCenterList(v:List<Center>, x:Center) {
+      addToCenterList(List<Center> v, Center x) {
         if (x != null && v.indexOf(x) < 0) { v.push(x); }
       }
           
-      for(libedge:com.nodename.Delaunay.Edge in libedges) {
+      for(delaunay.Edge libedge in libedges) {
           dedge:LineSegment = libedge.delaunayLine();
           vedge:LineSegment = libedge.voronoiEdge();
 
@@ -406,8 +405,9 @@ class Map {
     // often end up on river paths because they don't raise the
     // elevation as much as other terrain does.
     assignCornerElevations() {
-      Corner q, Corner s;
-      queue:Array = [];
+      Corner q;
+      Corner s;
+      List queue = [];
       
       for(q in corners) {
           q.water = !inside(q.point);
@@ -463,11 +463,13 @@ class Map {
     // elevations. Specifically, we want elevation X to have frequency
     // (1-X).  To do this we will sort the corners, then set each
     // corner to its desired elevation.
-    redistributeElevations(locations:Array) {
+    redistributeElevations(List locations) {
       // SCALE_FACTOR increases the mountain area. At 1.0 the maximum
       // elevation barely shows up on the map, so we set it to 1.1.
       SCALE_FACTOR:Number = 1.1;
-      int i, y:Number, x:Number;
+      int i;
+      num y;
+      num x;
 
       locations.sortOn('elevation', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
@@ -489,7 +491,7 @@ class Map {
 
 
     // Change the overall distribution of moisture to be evenly distributed.
-    redistributeMoisture(locations:Array) {
+    redistributeMoisture(List locations) {
       int i;
       locations.sortOn('moisture', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
@@ -506,8 +508,11 @@ class Map {
       // map. In the first pass, mark the edges of the map as ocean;
       // in the second pass, mark any water-containing polygon
       // connected an ocean as ocean.
-      queue:Array = [];
-      Center p, Corner q, Center r, numWater:int;
+      List queue = [];
+      Center p;
+      Corner q;
+      Center r;
+      int numWater;
       
       for(p in centers) {
           numWater = 0;
@@ -568,7 +573,9 @@ class Map {
 
     // Polygon elevations are the average of the elevations of their corners.
     assignPolygonElevations() {
-      Center p, Corner q, sumElevation:Number;
+      Center p;
+      Corner q;
+      num sumElevation;
       for(p in centers) {
           sumElevation = 0.0;
           for(q in p.corners) {
@@ -583,7 +590,9 @@ class Map {
     // point downstream from it, or to itself.  This is used for
     // generating rivers and watersheds.
     calculateDownslopes() {
-      Corner q, Corner s, r:Corner;
+      Corner q;
+      Corner s;
+      Corner r;
       
       for(q in corners) {
           r = q;
@@ -603,7 +612,10 @@ class Map {
     // more useful to compute them on polygon centers so that every
     // polygon can be marked as being in one watershed.
     calculateWatersheds() {
-      Corner q, r:Corner, int i, changed:Boolean;
+      Corner q;
+      Corner r;
+      int i;
+      bool changed;
       
       // Initially the watershed pointer points downslope one step.      
       for(q in corners) {
@@ -639,7 +651,9 @@ class Map {
     // Create rivers along edges. Pick a random corner point, then
     // move downslope. Mark the edges and corners as rivers.
     createRivers() {
-      int i, Corner q, Edge edge;
+      int i;
+      Corner q;
+      Edge edge;
       
       for (i = 0; i < SIZE/2; i++) {
         q = corners[mapRandom.nextIntRange(0, corners.length-1)];
@@ -663,8 +677,10 @@ class Map {
     // and lakes (not oceans). Saltwater sources have moisture but do
     // not spread it (we set it at the end, after propagation).
     assignCornerMoisture() {
-      Corner q, r:Corner, newMoisture:Number;
-      queue:Array = [];
+      Corner q;
+      Corner r;
+      num newMoisture;
+      List queue = [];
       // Fresh water
       for(q in corners) {
           if ((q.water || q.river > 0) && !q.ocean) {
@@ -696,7 +712,9 @@ class Map {
 
     // Polygon moisture is the average of the moisture at corners
     assignPolygonMoisture() {
-      Center p, Corner q, sumMoisture:Number;
+      Center p;
+      Corner q;
+      num sumMoisture;
       for(p in centers) {
           sumMoisture = 0.0;
           for(q in p.corners) {
@@ -770,182 +788,11 @@ class Map {
 
     
     // Determine whether a given point should be on the island or in the water.
-    inside(Point p):Boolean {
+    bool inside(Point p) {
       return islandShape(new Point(2*(p.x/SIZE - 0.5), 2*(p.y/SIZE - 0.5)));
     }
-  }
 }
 
 
-// Factory class to build the 'inside' that tells us whether
-// a point should be on the island or in the water.
-import flash.geom.Point;
-import flash.display.BitmapData;
-import de.polygonal.math.PM_PRNG;
-class IslandShape {
-  // This class has factory s for generating islands of
-  // different shapes. The factory returns a that takes a
-  // normalized point (x and y are -1 to +1) and returns true if the
-  // point should be on the island, and false if it should be water
-  // (lake or ocean).
-
-  
-  // The radial island radius is based on overlapping sine waves 
-  static ISLAND_FACTOR:Number = 1.07;  // 1.0 means no small islands; 2.0 leads to a lot
-  static makeRadial(int seed):{
-    islandRandom:PM_PRNG = new PM_PRNG();
-    islandRandom.seed = seed;
-    bumps:int = islandRandom.nextIntRange(1, 6);
-    startAngle:Number = islandRandom.nextDoubleRange(0, 2*Math.PI);
-    dipAngle:Number = islandRandom.nextDoubleRange(0, 2*Math.PI);
-    dipWidth:Number = islandRandom.nextDoubleRange(0.2, 0.7);
-    
-    inside(Point q):Boolean {
-      angle:Number = Math.atan2(q.y, q.x);
-      length:Number = 0.5 * (Math.max(Math.abs(q.x), Math.abs(q.y)) + q.length);
-
-      r1:Number = 0.5 + 0.40*Math.sin(startAngle + bumps*angle + Math.cos((bumps+3)*angle));
-      r2:Number = 0.7 - 0.20*Math.sin(startAngle + bumps*angle - Math.sin((bumps+2)*angle));
-      if (Math.abs(angle - dipAngle) < dipWidth
-          || Math.abs(angle - dipAngle + 2*Math.PI) < dipWidth
-          || Math.abs(angle - dipAngle - 2*Math.PI) < dipWidth) {
-        r1 = r2 = 0.2;
-      }
-      return  (length < r1 || (length > r1*ISLAND_FACTOR && length < r2));
-    }
-
-    return inside;
-  }
 
 
-  // The Perlin-based island combines perlin noise with the radius
-  static makePerlin(int seed):{
-    perlin:BitmapData = new BitmapData(256, 256);
-    perlin.perlinNoise(64, 64, 8, seed, false, true);
-    
-    return (Point q):Boolean {
-      c:Number = (perlin.getPixel(int((q.x+1)*128), int((q.y+1)*128)) & 0xff) / 255.0;
-      return c > (0.3+0.3*q.length*q.length);
-    };
-  }
-
-
-  // The square shape fills the entire space with land
-  static makeSquare(int seed):{
-    return (Point q):Boolean {
-      return true;
-    };
-  }
-
-
-  // The blob island is shaped like Amit's blob logo
-  static makeBlob(int seed):{
-    return (Point q):Boolean {
-      eye1:Boolean = new Point(q.x-0.2, q.y/2+0.2).length < 0.05;
-      eye2:Boolean = new Point(q.x+0.2, q.y/2+0.2).length < 0.05;
-      body:Boolean = q.length < 0.8 - 0.18*Math.sin(5*Math.atan2(q.y, q.x));
-      return body && !eye1 && !eye2;
-    };
-  }
-  
-}
-
-
-// Factory class to choose points for the graph
-import flash.geom.Point;
-import flash.geom.Rectangle;
-import com.nodename.Delaunay.Voronoi;
-import de.polygonal.math.PM_PRNG;
-class PointSelector {
-  static NUM_LLOYD_RELAXATIONS:int = 2;
-
-  // The square and hex grid point selection remove randomness from
-  // where the points are; we need to inject more randomness elsewhere
-  // to make the maps look better. I do this in the corner
-  // elevations. However I think more experimentation is needed.
-  static needsMoreRandomness(type:String):Boolean {
-    return type == 'Square' || type == 'Hexagon';
-  }
-
-  
-  // Generate points at random locations
-  static generateRandom(int size, int seed):{
-    return (int numPoints):List<Point> {
-      mapRandom:PM_PRNG = new PM_PRNG();
-      mapRandom.seed = seed;
-      Point p, int i, List<Point> points = new List<Point>();
-      for (i = 0; i < numPoints; i++) {
-        p = new Point(mapRandom.nextDoubleRange(10, size-10),
-                      mapRandom.nextDoubleRange(10, size-10));
-        points.push(p);
-      }
-      return points;
-    }
-  }
-
-
-  // Improve the random set of points with Lloyd Relaxation
-  static generateRelaxed(int size, int seed):{
-    return (int numPoints):List<Point> {
-      // We'd really like to generate "blue noise". Algorithms:
-      // 1. Poisson dart throwing: checknew point against all
-      //     existing points, and reject it if it's too close.
-      // 2. Start with a hexagonal grid and randomly perturb points.
-      // 3. Lloyd Relaxation: movepoint to the centroid of the
-      //     generated Voronoi polygon, then generate Voronoi again.
-      // 4. Use force-based layout algorithms to push points away.
-      // 5. More at http://www.cs.virginia.edu/~gfx/pubs/antimony/
-      // Option 3 is implemented here. If it's run for too many iterations,
-      // it will turn into a grid, but convergence is very slow, and we only
-      // run it a few times.
-      int i, Point p, Point q, Voronoi voronoi, region:List<Point>;
-      List<Point> points = generateRandom(size, seed)(numPoints);
-      for (i = 0; i < NUM_LLOYD_RELAXATIONS; i++) {
-        voronoi = new Voronoi(points, null, new Rectangle(0, 0, size, size));
-        for(p in points) {
-            region = voronoi.region(p);
-            p.x = 0.0;
-            p.y = 0.0;
-            for(q in region) {
-                p.x += q.x;
-                p.y += q.y;
-              }
-            p.x /= region.length;
-            p.y /= region.length;
-            region.splice(0, region.length);
-          }
-        voronoi.dispose();
-      }
-      return points;
-    }
-  }
-    
-  
-  // Generate points on a square grid
-  static generateSquare(int size, int seed):{
-    return (int numPoints):List<Point> {
-      List<Point> points = new List<Point>();
-      N:int = Math.sqrt(numPoints);
-      for (x:int = 0; x < N; x++) {
-        for (y:int = 0; y < N; y++) {
-          points.push(new Point((0.5 + x)/N * size, (0.5 + y)/N * size));
-        }
-      }
-      return points;
-    }
-  }
-
-  
-  // Generate points on a square grid
-  static generateHexagon(int size, int seed):{
-    return (int numPoints):List<Point> {
-      List<Point> points = new List<Point>();
-      N:int = Math.sqrt(numPoints);
-      for (x:int = 0; x < N; x++) {
-        for (y:int = 0; y < N; y++) {
-          points.push(new Point((0.5 + x)/N * size, (0.25 + 0.5*x%2 + y)/N * size));
-        }
-      }
-      return points;
-    }
-  }
