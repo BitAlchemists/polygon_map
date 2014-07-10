@@ -43,7 +43,7 @@ static Function makeRadial(int seed){
 
 // The Perlin-based island combines perlin noise with the radius
 static Function makePerlin(int seed){
-  BitmapData perlin = new BitmapData(256, 256);
+  stagexl_plus.BitmapData perlin = new BitmapData(256, 256);
   perlin.perlinNoise(64, 64, 8, seed, false, true);
 
   return (Point q) {
