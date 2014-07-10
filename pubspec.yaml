@@ -3,3 +3,4 @@ description: A sample application
 dependencies:
   browser: any
   stagexl: any
+  vector_math: any

@@ -6,7 +6,7 @@ import 'package:stagexl/stagexl.dart';
 import "../delaunay/delaunay.dart" as dalaunay;
 import "../PM_PRNG/PM_PRNG.dart";
 import "../stagexl_plus/stagexl_plus.dart" as stagexl_plus;
-
+import "package:vector_math/vector_math.dart";
 
 part "world_map.dart";
 part "island_shape.dart";
@@ -16,6 +16,9 @@ part "lava.dart";
 part "watersheds.dart";
 part "noisy_edges.dart";
 part "helpers.dart";
+part "graph/corner.dart";
+part "graph/edge.dart";
+part "graph/center.dart";
 
 
 class displayColors {
@@ -217,8 +220,8 @@ class mapgen2 extends Sprite {
   // Command queue is processed on ENTER_FRAME. If it's empty,
   // remove the handler.
   List _guiQueue = [];
-  _onEnterFrame(Event e) {
-    (_guiQueue.shift()[1])();
+  _onEnterFrame(Event e) { 
+    (_guiQueue.removeAt(0)[1])();
     if (_guiQueue.length == 0) {
       stage.removeEventListener(Event.ENTER_FRAME, _onEnterFrame);
       statusBar.text = "";
@@ -240,16 +243,16 @@ class mapgen2 extends Sprite {
       statusBar.text = status;
       stage.addEventListener(Event.ENTER_FRAME, _onEnterFrame);
     }
-    _guiQueue.push([status, command]);
+    _guiQueue.add([status, command]);
   }
 
   
   // Show some information about the maps
   static List _biomeMap =
-    ['BEACH', 'LAKE', 'ICE', 'MARSH', 'SNOW', 'TUNDRA', 'BARE', 'SCORCHED',
-     'TAIGA', 'SHRUBLAND', 'TEMPERATE_DESERT', 'TEMPERATE_RAIN_FOREST',
-     'TEMPERATE_DECIDUOUS_FOREST', 'GRASSLAND', 'SUBTROPICAL_DESERT',
-     'TROPICAL_RAIN_FOREST', 'TROPICAL_SEASONAL_FOREST'];
+    [ displayColors.BEACH, displayColors.LAKE, displayColors.ICE, displayColors.MARSH, displayColors.SNOW, displayColors.TUNDRA, displayColors.BARE, displayColors.SCORCHED,
+    displayColors.TAIGA, displayColors.SHRUBLAND, displayColors.TEMPERATE_DESERT, displayColors.TEMPERATE_RAIN_FOREST,
+    displayColors.TEMPERATE_DECIDUOUS_FOREST, displayColors.GRASSLAND, displayColors.SUBTROPICAL_DESERT,
+    displayColors.TROPICAL_RAIN_FOREST, displayColors.TROPICAL_SEASONAL_FOREST];
   drawHistograms() {
     // There are pairs ofs forchart. The bucket
     // maps the polygon Center to a small int, and the
@@ -268,7 +271,7 @@ class mapgen2 extends Sprite {
     }
     int elevationBucket(Center p) {
       if (p.ocean) return -1;
-      else return Math.floor(p.elevation*10);
+      else return (p.elevation*10).floor();
     }
     int elevationColor(int bucket) {
       return interpolateColor(displayColors.TEMPERATE_DECIDUOUS_FOREST,
@@ -276,7 +279,7 @@ class mapgen2 extends Sprite {
     }
     int moistureBucket(Center p) {
       if (p.water) return -1;
-      else return Math.floor(p.moisture*10);
+      else return (p.moisture*10).floor();
     }
     int moistureColor(int bucket) {
       return interpolateColor(displayColors.BEACH, displayColors.RIVER, bucket*0.1);
@@ -285,7 +288,7 @@ class mapgen2 extends Sprite {
       return _biomeMap.indexOf(p.biome);
     }
     int biomeColor(int bucket) {
-      return displayColors[_biomeMap[bucket]];
+      return _biomeMap[bucket];
     }
 
     List computeHistogram(Function bucketFn) {
@@ -295,7 +298,7 @@ class mapgen2 extends Sprite {
       histogram = [];
       for (p in map.centers) {
           bucket = bucketFn(p);
-          if (bucket >= 0) histogram[bucket] = (histogram[bucket] || 0) + 1;
+          if (bucket >= 0) histogram[bucket] = ((bucket < histogram.length) ? histogram[bucket] : 0) + 1;
         }
       return histogram;
     }
@@ -308,14 +311,13 @@ class mapgen2 extends Sprite {
       
       scale = 0.0;
       for (i = 0; i < histogram.length; i++) {
-        scale = Math.max(scale, histogram[i] || 0);
+        scale = Math.max(scale, (i < histogram.length) ? histogram[i] : 0);
       }
       for (i = 0; i < histogram.length; i++) {
         if (histogram[i]) {
-          graphics.beginFill(colorFn(i));
-          graphics.drawRect(SIZE+x+i*width/histogram.length, y+height,
+          graphics.rect(SIZE+x+i*width/histogram.length, y+height,
                             Math.max(0, width/histogram.length-1), -height*histogram[i]/scale);
-          graphics.endFill();
+          graphics.fillColor(colorFn(i));
         }
       }
     }
@@ -325,19 +327,18 @@ class mapgen2 extends Sprite {
       num scale;
       int i;
       num w;
-      histogram:Array = computeHistogram(bucketFn);
+      List histogram = computeHistogram(bucketFn);
     
       scale = 0.0;
       for (i = 0; i < histogram.length; i++) {
-        scale += histogram[i] || 0.0;
+        scale += (i < histogram.length) ? histogram[i] : 0.0;
       }
       for (i = 0; i < histogram.length; i++) {
         if (histogram[i]) {
-          graphics.beginFill(colorFn(i));
           w = histogram[i]/scale*width;
-          graphics.drawRect(SIZE+x, y, Math.max(0, w-1), height);
+          graphics.rect(SIZE+x, y, Math.max(0, w-1), height);
           x += w;
-          graphics.endFill();
+          graphics.fillColor(colorFn(i));
         }
       }
     }
@@ -368,9 +369,9 @@ class mapgen2 extends Sprite {
 
   // Helper for color manipulation. When f==0: color0, f==1: color1
   int interpolateColor(int color0, int color1, num f) {
-    r:uint = uint((1-f)*(color0 >> 16) + f*(color1 >> 16));
-    g:uint = uint((1-f)*((color0 >> 8) & 0xff) + f*((color1 >> 8) & 0xff));
-    b:uint = uint((1-f)*(color0 & 0xff) + f*(color1 & 0xff));
+    int r = ((1-f)*(color0 >> 16) + f*(color1 >> 16)).toInt();
+    int g = ((1-f)*((color0 >> 8) & 0xff) + f*((color1 >> 8) & 0xff)).toInt();
+    int b = ((1-f)*(color0 & 0xff) + f*(color1 & 0xff)).toInt();
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
@@ -384,28 +385,28 @@ class mapgen2 extends Sprite {
   drawGradientTriangle(Graphics graphics,
                                         Vector3 v1, Vector3 v2, Vector3 v3,
                                         List colors, fillFunction) {
-    m:Matrix = new Matrix();
+    Matrix m = new Matrix.fromIdentity();
 
     // Center of triangle:
-    V:Vector3D = v1.add(v2).add(v3);
-    V.scaleBy(1/3.0);
+    Vector3 V = v1.add(v2).add(v3);
+    V.scale(1/3.0);
 
     // Normal of the plane containing the triangle:
-    N:Vector3D = v2.subtract(v1).crossProduct(v3.subtract(v1));
+    Vector3 N = v2.sub(v1).cross(v3.sub(v1));
     N.normalize();
 
     // Gradient vector in x-y plane pointing in the direction of increasing z
-    G:Vector3D = new Vector3D(-N.x/N.z, -N.y/N.z, 0);
+    Vector3 G = new Vector3(-N.x/N.z, -N.y/N.z, 0.0);
 
     // Center of the color gradient
-    Vector3 C = new Vector3D(V.x - G.x*((V.z-0.5)/G.length/G.length), V.y - G.y*((V.z-0.5)/G.length/G.length));
+    Vector3 C = new Vector3(V.x - G.x*((V.z-0.5)/G.length/G.length), V.y - G.y*((V.z-0.5)/G.length/G.length), 0.0);
 
     if (G.length < 1e-6) {
       // If the gradient vector is small, there's not much
       // difference in colors across this triangle. Use a plain
       // fill, because the numeric accuracy of 1/G.length is not to
       // be trusted.  NOTE: only works for 1, 2, 3 colors in the array
-      color:uint = colors[0];
+      int color = colors[0];
       if (colors.length == 2) {
         color = interpolateColor(colors[0], colors[1], V.z);
       } else if (colors.length == 3) {
@@ -527,15 +528,15 @@ class mapgen2 extends Sprite {
               midpointAttr:Number = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
               drawGradientTriangle
                 (graphics,
-                 new Vector3D(p.point.x, p.point.y, p[gradientFillProperty]),
-                 new Vector3D(corner0.point.x, corner0.point.y, corner0[gradientFillProperty]),
-                 new Vector3D(midpoint.x, midpoint.y, midpointAttr),
+                 new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
+                 new Vector3(corner0.point.x, corner0.point.y, corner0[gradientFillProperty]),
+                 new Vector3(midpoint.x, midpoint.y, midpointAttr),
                  [colors.GRADIENT_LOW, colors.GRADIENT_HIGH], drawPath0);
               drawGradientTriangle
                 (graphics,
-                 new Vector3D(p.point.x, p.point.y, p[gradientFillProperty]),
-                 new Vector3D(midpoint.x, midpoint.y, midpointAttr),
-                 new Vector3D(corner1.point.x, corner1.point.y, corner1[gradientFillProperty]),
+                 new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
+                 new Vector3(midpoint.x, midpoint.y, midpointAttr),
+                 new Vector3(corner1.point.x, corner1.point.y, corner1[gradientFillProperty]),
                  [colors.GRADIENT_LOW, colors.GRADIENT_HIGH], drawPath1);
             } else {
               graphics.beginFill(color);
@@ -780,11 +781,11 @@ class mapgen2 extends Sprite {
   }
   
 
-  Vector3 lightVector = new Vector3D(-1, -1, 0);
+  Vector3 lightVector = new Vector3(-1, -1, 0);
   num calculateLighting(Center p, Corner r, Corner s) {
-    Vector3 A = new Vector3D(p.point.x, p.point.y, p.elevation);
-    Vector3 B = new Vector3D(r.point.x, r.point.y, r.elevation);
-    Vector3 C = new Vector3D(s.point.x, s.point.y, s.elevation);
+    Vector3 A = new Vector3(p.point.x, p.point.y, p.elevation);
+    Vector3 B = new Vector3(r.point.x, r.point.y, r.elevation);
+    Vector3 C = new Vector3(s.point.x, s.point.y, s.elevation);
     Vector3 normal = B.subtract(A).crossProduct(C.subtract(A));
     if (normal.z < 0) { normal.scaleBy(-1); }
     normal.normalize();
@@ -872,7 +873,7 @@ class mapgen2 extends Sprite {
     Shape exportGraphics = new Shape();
     ByteArray exportData = new ByteArray();
     
-    m:Matrix = new Matrix();
+    Matrix m = new Matrix();
     m.scale(2048.0 / SIZE, 2048.0 / SIZE);
 
     saveBitmapToArray() {
