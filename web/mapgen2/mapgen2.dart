@@ -19,6 +19,7 @@ part "helpers.dart";
 part "graph/corner.dart";
 part "graph/edge.dart";
 part "graph/center.dart";
+part "graph/biome.dart";
 
 
 class displayColors {
@@ -53,17 +54,31 @@ class displayColors {
   static const int TROPICAL_SEASONAL_FOREST = 0x559944;
 }
 
+List _displayColorList = [displayColors.OCEAN, displayColors.COAST, displayColors.LAKESHORE,
+  displayColors.LAKE, displayColors.RIVER, displayColors.MARSH, displayColors.ICE, displayColors.BEACH,
+  displayColors.ROAD1, displayColors.ROAD2, displayColors.ROAD3, displayColors.BRIDGE, displayColors.LAVA,
+  displayColors.SNOW, displayColors.TUNDRA, displayColors.BARE, displayColors.SCORCHED, displayColors.TAIGA,
+  displayColors.SHRUBLAND, displayColors.TEMPERATE_DESERT, displayColors.TEMPERATE_RAIN_FOREST,
+  displayColors.GRASSLAND, displayColors.SUBTROPICAL_DESERT, displayColors.TROPICAL_RAIN_FOREST,
+  displayColors.TROPICAL_SEASONAL_FOREST];
+
+
 class elevationGradientColors {
   static const int OCEAN = 0x008800;
   static const int GRADIENT_LOW = 0x008800;
   static const int GRADIENT_HIGH = 0xffff00;
 }
 
+List _elevationGradientColors = [elevationGradientColors.OCEAN, elevationGradientColors.GRADIENT_LOW, elevationGradientColors.GRADIENT_HIGH];
+
 class moistureGradientColors {
   static const int OCEAN = 0x4466ff;
   static const int GRADIENT_LOW = 0xbbaa33;
   static const int GRADIENT_HIGH = 0x4466ff;
 }
+
+List _moistureGradientColors = [moistureGradientColors.OCEAN, moistureGradientColors.GRADIENT_LOW, moistureGradientColors.GRADIENT_HIGH];
+
 
 class mapgen2 extends Sprite {
   static int SIZE = 600;
@@ -105,8 +120,8 @@ class mapgen2 extends Sprite {
 
 
   mapgen2() {
-    stage.scaleMode = 'noScale';
-    stage.align = 'TL';
+    stage.scaleMode = StageScaleMode.NO_SCALE;
+    stage.align = StageAlign.TOP_LEFT;
 
     addChild(noiseLayer);
     noiseLayer.bitmapData.noise(555, 128-10, 128+10, 7, true);
@@ -248,7 +263,7 @@ class mapgen2 extends Sprite {
 
   
   // Show some information about the maps
-  static List _biomeMap =
+  static List _biomeList =
     [ displayColors.BEACH, displayColors.LAKE, displayColors.ICE, displayColors.MARSH, displayColors.SNOW, displayColors.TUNDRA, displayColors.BARE, displayColors.SCORCHED,
     displayColors.TAIGA, displayColors.SHRUBLAND, displayColors.TEMPERATE_DESERT, displayColors.TEMPERATE_RAIN_FOREST,
     displayColors.TEMPERATE_DECIDUOUS_FOREST, displayColors.GRASSLAND, displayColors.SUBTROPICAL_DESERT,
@@ -285,10 +300,10 @@ class mapgen2 extends Sprite {
       return interpolateColor(displayColors.BEACH, displayColors.RIVER, bucket*0.1);
     }
     int biomeBucket(Center p) {
-      return _biomeMap.indexOf(p.biome);
+      return _biomeList.indexOf(p.biome);
     }
     int biomeColor(int bucket) {
-      return _biomeMap[bucket];
+      return _biomeList[bucket];
     }
 
     List computeHistogram(Function bucketFn) {
@@ -379,12 +394,13 @@ class mapgen2 extends Sprite {
   }
 
   
+  /* todo: reimplement 
   // Helper for drawing triangles with gradients. This
   // sets up the fill on the graphics object, and then
   // calls fillto draw the desired path.
   drawGradientTriangle(Graphics graphics,
                                         Vector3 v1, Vector3 v2, Vector3 v3,
-                                        List colors, fillFunction) {
+                                        List colors, drawFunction) {
     Matrix m = new Matrix.fromIdentity();
 
     // Center of triangle:
@@ -425,13 +441,14 @@ class mapgen2 extends Sprite {
       m.scale((1/G.length), (1/G.length));
       m.rotate(Math.atan2(G.y, G.x));
       m.translate(C.x, C.y);
-      alphas:Array = colors.map((_, int index, List A) { return 1.0; });
-      spread:Array = colors.map((_, int index, List A) { return 255*index/(A.length-1); });
+      List alphas = colors.map((_) { return 1.0; });
+      List spread = colors.map((color) { return 255*colors.indexOf(color)/(colors.length-1); });
       graphics.beginGradientFill(GradientType.LINEAR, colors, alphas, spread, m, SpreadMethod.PAD);
     }
-    fill();
+    drawFunction();
     graphics.endFill();
   }
+  */
   
 
   // Draw the map in the current map mode
@@ -443,51 +460,51 @@ class mapgen2 extends Sprite {
     
     if (mode == 'polygons') {
       noiseLayer.visible = false;
-      renderDebugPolygons(graphics, displayColors);
+      renderDebugPolygons(graphics);
     } else if (mode == 'watersheds') {
       noiseLayer.visible = false;
-      renderDebugPolygons(graphics, displayColors);
+      renderDebugPolygons(graphics);
       renderWatersheds(graphics);
       return;
     } else if (mode == 'biome') {
-      renderPolygons(graphics, displayColors, null, null);
+      renderPolygons(graphics, _displayColorList, null, null);
     } else if (mode == 'slopes') {
-      renderPolygons(graphics, displayColors, null, colorWithSlope);
+      renderPolygons(graphics, _displayColorList, null, colorWithSlope);
     } else if (mode == 'smooth') {
-      renderPolygons(graphics, displayColors, null, colorWithSmoothColors);
+      renderPolygons(graphics, _displayColorList, null, colorWithSmoothColors);
     } else if (mode == 'elevation') {
-      renderPolygons(graphics, elevationGradientColors, 'elevation', null);
+      renderPolygons(graphics, _elevationGradientColors, 'elevation', null);
     } else if (mode == 'moisture') {
-      renderPolygons(graphics, moistureGradientColors, 'moisture', null);
+      renderPolygons(graphics, _moistureGradientColors, 'moisture', null);
     }
 
     if (mode != 'slopes' && mode != 'moisture') {
-      renderRoads(graphics, displayColors);
+      renderRoads(graphics, _displayColorList);
     }
     if (mode != 'polygons') {
-      renderEdges(graphics, displayColors);
+      renderEdges(graphics, _displayColorList);
     }
     if (mode != 'slopes' && mode != 'moisture') {
-      renderBridges(graphics, displayColors);
+      renderBridges(graphics, _displayColorList);
     }
   }
   
   // Render the interior of polygons
-  renderPolygons(Graphics graphics, Map colors, String gradientFillProperty, colorOverrideFunction) {
+  renderPolygons(Graphics graphics, List colors, String gradientFillProperty, colorOverrideFunction) {
     Center p;
     Center r;
 
     // My Voronoi polygon rendering doesn't handle the boundary
     // polygons, so I just fill everything with ocean first.
-    graphics.beginFill(colors.OCEAN);
+    graphics.beginFill(displayColors.OCEAN);
     graphics.drawRect(0, 0, SIZE, SIZE);
     graphics.endFill();
     
     for (p in map.centers) {
         for(r in p.neighbors) {
             Edge edge = map.lookupEdgeFromCenter(p, r);
-            int color = colors[p.biome] || 0;
-            if (colorOverride!= null) {
+            int color = p.biome.color || 0;
+            if (colors!= null) {
               color = colorOverrideFunction(color, p, r, edge);
             }
 
@@ -526,18 +543,21 @@ class mapgen2 extends Sprite {
               // the resulting gradients tend to be smoother.
               midPoint point = edge.midpoint;
               midpointAttr:Number = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
+              /* todo: reimplement
               drawGradientTriangle
                 (graphics,
                  new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
                  new Vector3(corner0.point.x, corner0.point.y, corner0[gradientFillProperty]),
                  new Vector3(midpoint.x, midpoint.y, midpointAttr),
-                 [colors.GRADIENT_LOW, colors.GRADIENT_HIGH], drawPath0);
+                 [displayColors.GRADIENT_LOW, displayColors.GRADIENT_HIGH], drawPath0);
               drawGradientTriangle
                 (graphics,
                  new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
                  new Vector3(midpoint.x, midpoint.y, midpointAttr),
                  new Vector3(corner1.point.x, corner1.point.y, corner1[gradientFillProperty]),
-                 [colors.GRADIENT_LOW, colors.GRADIENT_HIGH], drawPath1);
+                 [displayColors.GRADIENT_LOW, displayColors.GRADIENT_HIGH], drawPath1);
+                
+               */
             } else {
               graphics.beginFill(color);
               drawPath0();
@@ -556,7 +576,7 @@ class mapgen2 extends Sprite {
   // don't line up with curved road segments when there are
   // roads. It might be worth making a shader that draws the bridge
   // only when there's water underneath.
-  renderBridges(Graphics graphics, Map colors) {
+  renderBridges(Graphics graphics, List colors) {
     Edge edge;
 
     for(edge in map.edges) {
@@ -575,7 +595,7 @@ class mapgen2 extends Sprite {
 
   
   // Render roads. We draw these before polygon edges, so that rivers overwrite roads.
-  renderRoads(Graphics graphics, Map colors) {
+  renderRoads(Graphics graphics, List colors) {
     // First draw the roads, because any other feature should draw
     // over them. Also, roads don't use the noisy lines.
     Center p;
@@ -658,7 +678,7 @@ class mapgen2 extends Sprite {
   // Render the exterior of polygons: coastlines, lake shores,
   // rivers, lava fissures. We draw all of these after the polygons
   // so that polygons don't overwrite any edges.
-  renderEdges(Graphics graphics, Map colors) {
+  renderEdges(Graphics graphics, List colors) {
     Center p;
     Center r;
     Edge edge;
@@ -702,7 +722,7 @@ class mapgen2 extends Sprite {
 
 
   // Render the polygons so that each can be seen clearly
-  renderDebugPolygons(Graphics graphics, Map colors) {
+  renderDebugPolygons(Graphics graphics) {
     Center p;
     Corner q;
     Edge edge;
@@ -722,7 +742,7 @@ class mapgen2 extends Sprite {
     }
     
     for(p in map.centers) {
-        color = colors[p.biome] || (p.ocean? colors.OCEAN : p.water? colors.RIVER : 0xffffff);
+        color = displayColors[p.biome] || (p.ocean? displayColors.OCEAN : p.water? displayColors.RIVER : 0xffffff);
         graphics.beginFill(interpolateColor(color, 0xdddddd, 0.2));
         for(edge in p.borders) {
             if (edge.v0 && edge.v1) {

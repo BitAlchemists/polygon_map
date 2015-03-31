@@ -8,7 +8,7 @@ part of mapgen2;
     bool ocean;  // ocean
     bool coast;  // land polygon touching an ocean
     bool border;  // at the edge of the map
-    String biome;  // biome type (see article)
+    Biome biome;  // biome type (see article)
     num elevation;  // 0.0-1.0
     num moisture;  // 0.0-1.0
 
