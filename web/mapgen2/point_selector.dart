@@ -20,7 +20,7 @@ class PointSelector {
   // Generate points at random locations
   static Function generateRandom(int size, int seed){
     return (int numPoints) {
-      mapRandom:PM_PRNG = new PM_PRNG();
+      PM_PRNG mapRandom = new PM_PRNG();
       mapRandom.seed = seed;
       Point p;
       int i;
@@ -28,7 +28,7 @@ class PointSelector {
       for (i = 0; i < numPoints; i++) {
         p = new Point(mapRandom.nextDoubleRange(10, size-10),
                       mapRandom.nextDoubleRange(10, size-10));
-        points.push(p);
+        points.add(p);
       }
       return points;
     };
@@ -52,7 +52,7 @@ class PointSelector {
       int i;
       Point p;
       Point q;
-      Voronoi voronoi;
+      delaunay.Voronoi voronoi;
       List<Point> region;
       List<Point> points = generateRandom(size, seed)(numPoints);
       for (i = 0; i < NUM_LLOYD_RELAXATIONS; i++) {

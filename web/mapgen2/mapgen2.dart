@@ -3,7 +3,7 @@ library mapgen2;
 import "dart:core";
 import "dart:math" as Math;
 import 'package:stagexl/stagexl.dart';
-import "../delaunay/delaunay.dart" as dalaunay;
+import "../delaunay/delaunay.dart" as delaunay;
 import "../PM_PRNG/PM_PRNG.dart";
 import "../stagexl_plus/stagexl_plus.dart" as stagexl_plus;
 import "package:vector_math/vector_math.dart";
@@ -24,34 +24,34 @@ part "graph/biome.dart";
 
 class displayColors {
   // Features
-  static const int OCEAN = 0x44447a;
-  static const int COAST = 0x33335a;
-  static const int LAKESHORE = 0x225588;
-  static const int LAKE = 0x336699;
-  static const int RIVER = 0x225588;
-  static const int MARSH = 0x2f6666;
-  static const int ICE = 0x99ffff;
-  static const int BEACH = 0xa09077;
-  static const int ROAD1 = 0x442211;
-  static const int ROAD2 = 0x553322;
-  static const int ROAD3 = 0x664433;
-  static const int BRIDGE = 0x686860;
-  static const int LAVA = 0xcc3333;
+  static const int OCEAN = 0xff44447a;
+  static const int COAST = 0xff33335a;
+  static const int LAKESHORE = 0xff225588;
+  static const int LAKE = 0xff336699;
+  static const int RIVER = 0xff225588;
+  static const int MARSH = 0xff2f6666;
+  static const int ICE = 0xff99ffff;
+  static const int BEACH = 0xffa09077;
+  static const int ROAD1 = 0xff442211;
+  static const int ROAD2 = 0xff553322;
+  static const int ROAD3 = 0xff664433;
+  static const int BRIDGE = 0xff686860;
+  static const int LAVA = 0xffcc3333;
 
   // Terrain
-  static const int SNOW = 0xffffff;
-  static const int TUNDRA = 0xbbbbaa;
-  static const int BARE = 0x888888;
-  static const int SCORCHED = 0x555555;
-  static const int TAIGA = 0x99aa77;
-  static const int SHRUBLAND = 0x889977;
-  static const int TEMPERATE_DESERT = 0xc9d29b;
-  static const int TEMPERATE_RAIN_FOREST = 0x448855;
-  static const int TEMPERATE_DECIDUOUS_FOREST = 0x679459;
-  static const int GRASSLAND = 0x88aa55;
-  static const int SUBTROPICAL_DESERT = 0xd2b98b;
-  static const int TROPICAL_RAIN_FOREST = 0x337755;
-  static const int TROPICAL_SEASONAL_FOREST = 0x559944;
+  static const int SNOW = 0xffffffff;
+  static const int TUNDRA = 0xffbbbbaa;
+  static const int BARE = 0xff888888;
+  static const int SCORCHED = 0xff555555;
+  static const int TAIGA = 0xff99aa77;
+  static const int SHRUBLAND = 0xff889977;
+  static const int TEMPERATE_DESERT = 0xffc9d29b;
+  static const int TEMPERATE_RAIN_FOREST = 0xff448855;
+  static const int TEMPERATE_DECIDUOUS_FOREST = 0xff679459;
+  static const int GRASSLAND = 0xff88aa55;
+  static const int SUBTROPICAL_DESERT = 0xffd2b98b;
+  static const int TROPICAL_RAIN_FOREST = 0xff337755;
+  static const int TROPICAL_SEASONAL_FOREST = 0xff559944;
 }
 
 List _displayColorList = [displayColors.OCEAN, displayColors.COAST, displayColors.LAKESHORE,
@@ -64,21 +64,24 @@ List _displayColorList = [displayColors.OCEAN, displayColors.COAST, displayColor
 
 
 class elevationGradientColors {
-  static const int OCEAN = 0x008800;
-  static const int GRADIENT_LOW = 0x008800;
-  static const int GRADIENT_HIGH = 0xffff00;
+  static const int OCEAN = 0xff008800;
+  static const int GRADIENT_LOW = 0xff008800;
+  static const int GRADIENT_HIGH = 0xffffff00;
 }
 
 List _elevationGradientColors = [elevationGradientColors.OCEAN, elevationGradientColors.GRADIENT_LOW, elevationGradientColors.GRADIENT_HIGH];
 
 class moistureGradientColors {
-  static const int OCEAN = 0x4466ff;
-  static const int GRADIENT_LOW = 0xbbaa33;
-  static const int GRADIENT_HIGH = 0x4466ff;
+  static const int OCEAN = 0xff4466ff;
+  static const int GRADIENT_LOW = 0xffbbaa33;
+  static const int GRADIENT_HIGH = 0xff4466ff;
 }
 
 List _moistureGradientColors = [moistureGradientColors.OCEAN, moistureGradientColors.GRADIENT_LOW, moistureGradientColors.GRADIENT_HIGH];
 
+addVectorToPoint(Vector V, Point P){
+  return new Point(V.x + P.x, V.y + P.y);
+}
 
 class mapgen2 extends Sprite {
   static int SIZE = 600;
@@ -182,7 +185,7 @@ class mapgen2 extends Sprite {
   void graphicsReset() {
     graphics.clear();
     graphics.rect(0, 0, 2000, 2000);
-    graphics.fillColor(0xbbbbaa);
+    graphics.fillColor(0xffbbbbaa);
     graphics.rect(0, 0, SIZE, SIZE);
     graphics.fillColor(displayColors.OCEAN);
   }
@@ -381,7 +384,7 @@ class mapgen2 extends Sprite {
     }
   }
 
-
+  // TODO: do we need to cover alpha?
   // Helper for color manipulation. When f==0: color0, f==1: color1
   int interpolateColor(int color0, int color1, num f) {
     int r = ((1-f)*(color0 >> 16) + f*(color1 >> 16)).toInt();
@@ -390,7 +393,7 @@ class mapgen2 extends Sprite {
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    return (r << 16) | (g << 8) | b;
+    return (0xff << 24) | (r << 16) | (g << 8) | b;
   }
 
   
@@ -482,10 +485,10 @@ class mapgen2 extends Sprite {
       renderRoads(graphics, _displayColorList);
     }
     if (mode != 'polygons') {
-      renderEdges(graphics, _displayColorList);
+      renderEdges(graphics);
     }
     if (mode != 'slopes' && mode != 'moisture') {
-      renderBridges(graphics, _displayColorList);
+      renderBridges(graphics);
     }
   }
   
@@ -496,14 +499,13 @@ class mapgen2 extends Sprite {
 
     // My Voronoi polygon rendering doesn't handle the boundary
     // polygons, so I just fill everything with ocean first.
-    graphics.beginFill(displayColors.OCEAN);
-    graphics.drawRect(0, 0, SIZE, SIZE);
-    graphics.endFill();
+    graphics.rect(0, 0, SIZE, SIZE);
+    graphics.fillColor(displayColors.OCEAN);
     
     for (p in map.centers) {
         for(r in p.neighbors) {
             Edge edge = map.lookupEdgeFromCenter(p, r);
-            int color = p.biome.color || 0;
+            int color = p.biome.color != null ? p.biome.color : 0;
             if (colors!= null) {
               color = colorOverrideFunction(color, p, r, edge);
             }
@@ -535,15 +537,16 @@ class mapgen2 extends Sprite {
             if (gradientFillProperty != null) {
               // We'll draw two triangles: center - corner0 -
               // midpoint and center - midpoint - corner1.
-              corner0:Corner = edge.v0;
-              corner1:Corner = edge.v1;
+              Corner corner0 = edge.v0;
+              Corner corner1 = edge.v1;
 
               // We pick the midpoint elevation/moisture between
               // corners instead of between polygon centers because
               // the resulting gradients tend to be smoother.
-              midPoint point = edge.midpoint;
-              midpointAttr:Number = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
-              /* todo: reimplement
+              Point midpoint = edge.midpoint;
+              /* TODO: reimplement
+              num midpointAttr = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
+              
               drawGradientTriangle
                 (graphics,
                  new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
@@ -559,10 +562,9 @@ class mapgen2 extends Sprite {
                 
                */
             } else {
-              graphics.beginFill(color);
               drawPath0();
               drawPath1();
-              graphics.endFill();
+              graphics.fillColor(color);
             }
           }
       }
@@ -576,19 +578,24 @@ class mapgen2 extends Sprite {
   // don't line up with curved road segments when there are
   // roads. It might be worth making a shader that draws the bridge
   // only when there's water underneath.
-  renderBridges(Graphics graphics, List colors) {
+  renderBridges(Graphics graphics) {
     Edge edge;
 
     for(edge in map.edges) {
         if (edge.river > 0 && edge.river < 4
             && !edge.d0.water && !edge.d1.water
             && (edge.d0.elevation > 0.05 || edge.d1.elevation > 0.05)) {
-          n:Point = new Point(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
-          n.normalize(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
-          graphics.lineStyle(1.1, colors.BRIDGE, 1.0, false, LineScaleMode.NORMAL, CapsStyle.SQUARE);
+          Vector n = new Vector(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
+          
+          // previous: n.normalize(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
+          n = n.normalize().scale(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
+          
+          // TODO: is this correct?
+          //graphics.lineStyle(1.1, colors.BRIDGE, 1.0, false, LineScaleMode.NORMAL, CapsStyle.SQUARE);
           graphics.moveTo(edge.midpoint.x - n.x, edge.midpoint.y - n.y);
           graphics.lineTo(edge.midpoint.x + n.x, edge.midpoint.y + n.y);
-          graphics.lineStyle();
+          //graphics.lineStyle();
+          graphics.strokeColor(displayColors.BRIDGE);
         }
       }
   }
@@ -611,16 +618,15 @@ class mapgen2 extends Sprite {
 
     // Helper: find the normal vector across edge 'e' and
     // make sure to point it in a direction towards 'c'.
-    Point normalTowards(Edge e, Point c, num len) {
+    Vector normalTowards(Edge e, Point c, num len) {
       // Rotate the v0-->v1 vector by 90 degrees:
-      n:Point = new Point(-(e.v1.point.y - e.v0.point.y), e.v1.point.x - e.v0.point.x);
+      Vector n = new Vector(-(e.v1.point.y - e.v0.point.y), e.v1.point.x - e.v0.point.x);
       // Flip it around it if doesn't point towards c
-      d:Point = c.subtract(e.midpoint);
+      Point d = c - e.midpoint;
       if (n.x * d.x + n.y * d.y < 0) {
-        n.x = -n.x;
-        n.y = -n.y;
+        n.scale(-1);
       }
-      n.normalize(len);
+      n = n.normalize().scale(len);
       return n;
     }
     
@@ -641,17 +647,16 @@ class mapgen2 extends Sprite {
                     // additional vertex C.  This usually works but
                     // not always.
                     d = 0.5*Math.min
-                      (edge1.midpoint.subtract(p.point).length,
-                       edge2.midpoint.subtract(p.point).length);
-                    A = normalTowards(edge1, p.point, d).add(edge1.midpoint);
-                    B = normalTowards(edge2, p.point, d).add(edge2.midpoint);
+                      ((edge1.midpoint - p.point).magnitude,
+                       (edge2.midpoint - p.point).magnitude);
+                    A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
+                    B = addVectorToPoint(normalTowards(edge2, p.point, d), edge2.midpoint);
                     C = Point.interpolate(A, B, 0.5);
-                    graphics.lineStyle(1.1, colors['ROAD'+roads.road[edge1.index]]);
                     graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
-                    graphics.curveTo(A.x, A.y, C.x, C.y);
-                    graphics.lineStyle(1.1, colors['ROAD'+roads.road[edge2.index]]);
-                    graphics.curveTo(B.x, B.y, edge2.midpoint.x, edge2.midpoint.y);
-                    graphics.lineStyle();
+                    graphics.quadraticCurveTo(A.x, A.y, C.x, C.y);
+                    graphics.strokeColor(roads.road[edge1.index].color, 1.1);
+                    graphics.quadraticCurveTo(B.x, B.y, edge2.midpoint.x, edge2.midpoint.y);
+                    graphics.strokeColor(roads.road[edge2.index].color, 1.1);
                   }
                 }
               }
@@ -662,11 +667,10 @@ class mapgen2 extends Sprite {
             for(edge1 in p.borders) {
                 if (roads.road[edge1.index] > 0) {
                   d = 0.25*edge1.midpoint.subtract(p.point).length;
-                  A = normalTowards(edge1, p.point, d).add(edge1.midpoint);
-                  graphics.lineStyle(1.4, colors['ROAD'+roads.road[edge1.index]]);
+                  A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
                   graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
-                  graphics.curveTo(A.x, A.y, p.point.x, p.point.y);
-                  graphics.lineStyle();
+                  graphics.quadraticCurveTo(A.x, A.y, p.point.x, p.point.y);
+                  graphics.strokeColor(roads.road[edge1.index].colors, 1.4);
                 }
               }
           }
@@ -678,7 +682,7 @@ class mapgen2 extends Sprite {
   // Render the exterior of polygons: coastlines, lake shores,
   // rivers, lava fissures. We draw all of these after the polygons
   // so that polygons don't overwrite any edges.
-  renderEdges(Graphics graphics, List colors) {
+  renderEdges(Graphics graphics) {
     Center p;
     Center r;
     Edge edge;
@@ -691,21 +695,29 @@ class mapgen2 extends Sprite {
               // It's at the edge of the map
               continue;
             }
+            
+            int color = 0;
+            double width = 0.0;
+            
             if (p.ocean != r.ocean) {
               // One side is ocean and the other side is land -- coastline
-              graphics.lineStyle(2, colors.COAST);
-            } else if ((p.water > 0) != (r.water > 0) && p.biome != 'ICE' && r.biome != 'ICE') {
+              color = displayColors.COAST;
+              width = 2.0;
+            } else if (p.water != r.water && p.biome != 'ICE' && r.biome != 'ICE') {
               // Lake boundary
-              graphics.lineStyle(1, colors.LAKESHORE);
+              color = displayColors.LAKESHORE;
+              width = 1.0;
             } else if (p.water || r.water) {
               // Lake interior – we don't want to draw the rivers here
               continue;
-            } else if (lava.lava[edge.index]) {
+            } else if (lava.lava[edge.index] != null) {
               // Lava flow
-              graphics.lineStyle(1, colors.LAVA);
+              color = displayColors.LAVA;
+              width = 1.0;
             } else if (edge.river > 0) {
               // River edge
-              graphics.lineStyle(Math.sqrt(edge.river), colors.RIVER);
+              color = displayColors.RIVER;
+              width = Math.sqrt(edge.river);
             } else {
               // No edge
               continue;
@@ -715,7 +727,7 @@ class mapgen2 extends Sprite {
                             noisyEdges.path0[edge.index][0].y);
             drawPathForwards(graphics, noisyEdges.path0[edge.index]);
             drawPathBackwards(graphics, noisyEdges.path1[edge.index]);
-            graphics.lineStyle();
+            graphics.strokeColor(color, width);
           }
       }
   }
@@ -731,40 +743,41 @@ class mapgen2 extends Sprite {
 
     if (map.centers.length == 0) {
       // We're still constructing the map so we may have some points
-      graphics.beginFill(0xdddddd);
-      graphics.drawRect(0, 0, SIZE, SIZE);
-      graphics.endFill();
+      graphics.rect(0, 0, SIZE, SIZE);
+      graphics.fillColor(0xffdddddd);
       for(point in map.points) {
-          graphics.beginFill(0x000000);
-          graphics.drawCircle(point.x, point.y, 1.3);
-          graphics.endFill();
+          graphics.circle(point.x, point.y, 1.3);
+          graphics.fillColor(0xff000000);
         }
     }
     
     for(p in map.centers) {
-        color = displayColors[p.biome] || (p.ocean? displayColors.OCEAN : p.water? displayColors.RIVER : 0xffffff);
-        graphics.beginFill(interpolateColor(color, 0xdddddd, 0.2));
+        color = p.biome.color != null ? p.biome.color : 
+          (p.ocean != null ? displayColors.OCEAN : 
+            (p.water != null ? displayColors.RIVER : 0xffffffff));
         for(edge in p.borders) {
-            if (edge.v0 && edge.v1) {
+            if (edge.v0 != null && edge.v1 != null) {
               graphics.moveTo(p.point.x, p.point.y);
               graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
+              int color = 0;
+              double width = 0.0;
               if (edge.river > 0) {
-                graphics.lineStyle(2, displayColors.RIVER, 1.0);
+                color = displayColors.RIVER;
+                width = 2.0;
               } else {
-                graphics.lineStyle(0, 0x000000, 0.4);
+                color = 0x66000000;
+                width = 0.0;
               }
               graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
-              graphics.lineStyle();
+              graphics.strokeColor(color, width);
             }
           }
-        graphics.endFill();
-        graphics.beginFill(p.water > 0 ? 0x003333 : 0x000000, 0.7);
-        graphics.drawCircle(p.point.x, p.point.y, 1.3);
-        graphics.endFill();
+        graphics.fillColor(interpolateColor(color, 0xffdddddd, 0.2));
+        graphics.circle(p.point.x, p.point.y, 1.3);
+        graphics.fillColor(p.water ? 0xb0003333 : 0xb0000000);
         for(q in p.corners) {
-            graphics.beginFill(q.water? 0x0000ff : 0x009900);
-            graphics.drawRect(q.point.x-0.7, q.point.y-0.7, 1.5, 1.5);
-            graphics.endFill();
+            graphics.rect(q.point.x-0.7, q.point.y-0.7, 1.5, 1.5);
+            graphics.fillColor(q.water ? 0xff0000ff : 0xff009900);
           }
       }
   }
@@ -777,39 +790,37 @@ class mapgen2 extends Sprite {
     int w1;
 
     for(edge in map.edges) {
-        if (edge.d0 && edge.d1 && edge.v0 && edge.v1
+        if (edge.d0 != null && edge.d1 != null && edge.v0 != null && edge.v1 != null
             && !edge.d0.ocean && !edge.d1.ocean) {
           w0 = watersheds.watersheds[edge.d0.index];
           w1 = watersheds.watersheds[edge.d1.index];
           if (w0 != w1) {
-            graphics.lineStyle(3.5, 0x000000, 0.1*Math.sqrt((map.corners[w0].watershed_size || 1) + (map.corners[w1].watershed.watershed_size || 1)));
             graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
             graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
-            graphics.lineStyle();
+            graphics.strokeColor((0xff * 0.1*Math.sqrt((map.corners[w0].watershed_size != null ? map.corners[w0].watershed_size : 1) + (map.corners[w1].watershed.watershed_size != null ? map.corners[w1].watershed.watershed_size : 1))).toInt() << 24, 3.5);
           }
         }
       }
 
     for(edge in map.edges) {
-        if (edge.river) {
-          graphics.lineStyle(1.0, 0x6699ff);
+        if (edge.river != null) {
           graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
           graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
-          graphics.lineStyle();
+          graphics.strokeColor(0xff6699ff);
         }
       }
   }
   
 
-  Vector3 lightVector = new Vector3(-1, -1, 0);
+  Vector3 lightVector = new Vector3(-1.0, -1.0, 0.0);
   num calculateLighting(Center p, Corner r, Corner s) {
     Vector3 A = new Vector3(p.point.x, p.point.y, p.elevation);
     Vector3 B = new Vector3(r.point.x, r.point.y, r.elevation);
     Vector3 C = new Vector3(s.point.x, s.point.y, s.elevation);
-    Vector3 normal = B.subtract(A).crossProduct(C.subtract(A));
-    if (normal.z < 0) { normal.scaleBy(-1); }
+    Vector3 normal = (B-A).cross(C-A);
+    if (normal.z < 0) { normal.scale(-1.0); }
     normal.normalize();
-    light:Number = 0.5 + 35*normal.dotProduct(lightVector);
+    num light = 0.5 + 35*normal.dot(lightVector);
     if (light < 0) light = 0;
     if (light > 1) light = 1;
     return light;
@@ -818,17 +829,17 @@ class mapgen2 extends Sprite {
   int colorWithSlope(int color, Center p, Center q, Edge edge) {
     Corner r = edge.v0;
     Corner s = edge.v1;
-    if (!r || !s) {
+    if (r == null || s == null) {
       // Edge of the map
       return displayColors.OCEAN;
     } else if (p.water) {
       return color;
     }
 
-    if (q != null && p.water == q.water) color = interpolateColor(color, displayColors[q.biome], 0.4);
-    colorLow:int = interpolateColor(color, 0x333333, 0.7);
-    colorHigh:int = interpolateColor(color, 0xffffff, 0.3);
-    light:Number = calculateLighting(p, r, s);
+    if (q != null && p.water == q.water) color = interpolateColor(color, q.biome.color, 0.4);
+    int colorLow = interpolateColor(color, 0xff333333, 0.7);
+    int colorHigh = interpolateColor(color, 0xffffffff, 0.3);
+    num light = calculateLighting(p, r, s);
     if (light < 0.5) return interpolateColor(colorLow, color, light*2);
     else return interpolateColor(color, colorHigh, light*2-1);
   }
@@ -836,12 +847,12 @@ class mapgen2 extends Sprite {
 
   int colorWithSmoothColors(int color, Center p, Center q, Edge edge) {
     if (q != null && p.water == q.water) {
-      color = interpolateColor(displayColors[p.biome], displayColors[q.biome], 0.25);
+      color = interpolateColor(p.biome.color, q.biome.color, 0.25);
     }
     return color;
   }
 
-  
+  /*
   //////////////////////////////////////////////////////////////////////
   // The following code is used to export the maps to disk
 
@@ -850,11 +861,11 @@ class mapgen2 extends Sprite {
   // colors, and then save these bytes in a ByteArray. For override
   // codes, we turn off anti-aliasing.
   static Map exportOverrideColors = {
-    /* override codes are 0:none, 0x10:river water, 0x20:lava,
-       0x30:snow, 0x40:ice, 0x50:ocean, 0x60:lake, 0x70:lake shore,
-       0x80:ocean shore, 0x90,0xa0,0xb0:road, 0xc0:bridge.  These
-       are ORed with 0x01: polygon center, 0x02: safe polygon
-       center. */
+    // override codes are 0:none, 0x10:river water, 0x20:lava,
+    //   0x30:snow, 0x40:ice, 0x50:ocean, 0x60:lake, 0x70:lake shore,
+    //   0x80:ocean shore, 0x90,0xa0,0xb0:road, 0xc0:bridge.  These
+    //   are ORed with 0x01: polygon center, 0x02: safe polygon
+    //   center. 
     POLYGON_CENTER: 0x01,
     POLYGON_CENTER_SAFE: 0x03,
     OCEAN: 0x50,
@@ -958,7 +969,7 @@ class mapgen2 extends Sprite {
     return PNGEncoder.encode(exportBitmap);
   }
 
-  /*
+  
   // Export the graph data as XML.
   String exportPolygons() {
     // NOTE: For performance, we do not assemble the entire XML in
@@ -1067,19 +1078,21 @@ class mapgen2 extends Sprite {
   // Make a button or label. If the callback is null, it's just a label.
   TextField makeButton(String label, int x, int y, int width, callback) {
     TextField button = new TextField();
-    TextFormat format = new TextFormat();
-    format.font = "Arial";
-    format.align = 'center';
-    button.defaultTextFormat = format;
+    //TextFormat format = new TextFormat("Arial");
+//    format.font = "Arial";
+  //  format.align = 'center';
+    //button.defaultTextFormat = format;
+    button.defaultTextFormat.font = "Arial";
+    button.defaultTextFormat.align = 'center';
     button.text = label;
-    button.selectable = false;
+    //button.selectable = false;
     button.x = x;
     button.y = y;
     button.width = width;
     button.height = 20;
     if (callback != null) {
       button.background = true;
-      button.backgroundColor = 0xffffcc;
+      button.backgroundColor = 0xffffffcc;
       button.addEventListener(MouseEvent.CLICK, callback);
     }
     return button;
@@ -1088,14 +1101,14 @@ class mapgen2 extends Sprite {
   
   addIslandShapeButtons() {
     int y = 4;
-    islandShapeLabel:TextField = makeButton("Island Shape:", 25, y, 150, null);
+    TextField islandShapeLabel = makeButton("Island Shape:", 25, y, 150, null);
 
-    seedLabel:TextField = makeButton("Shape #", 20, y+22, 50, null);
+    TextField seedLabel = makeButton("Shape #", 20, y+22, 50, null);
     
     islandSeedInput = makeButton(islandSeedInitial, 70, y+22, 54, null);
     islandSeedInput.background = true;
-    islandSeedInput.backgroundColor = 0xccddcc;
-    islandSeedInput.selectable = true;
+    islandSeedInput.backgroundColor = 0xffccddcc;
+    //islandSeedInput.selectable = true;
     islandSeedInput.type = TextFieldType.INPUT;
     islandSeedInput.addEventListener(KeyboardEvent.KEY_UP, (KeyboardEvent e) {
         if (e.keyCode == 13) {
@@ -1103,9 +1116,11 @@ class mapgen2 extends Sprite {
         }
       });
 
+    Map mapTypes = {};
+    
     markActiveIslandShape(String newIslandType) {
-      mapTypes[islandType].backgroundColor = 0xffffcc;
-      mapTypes[newIslandType].backgroundColor = 0xffff00;
+      mapTypes[islandType].backgroundColor = 0xffffffcc;
+      mapTypes[newIslandType].backgroundColor = 0xffffff00;
     }
     
     Function setIslandTypeTo(String type){
@@ -1115,7 +1130,7 @@ class mapgen2 extends Sprite {
       };
     }
     
-    mapTypes:Object = {
+    mapTypes = {
       'Radial': makeButton("Radial", 23, y+44, 40, setIslandTypeTo('Radial')),
       'Perlin': makeButton("Perlin", 65, y+44, 35, setIslandTypeTo('Perlin')),
       'Square': makeButton("Square", 102, y+44, 44, setIslandTypeTo('Square')),
@@ -1129,15 +1144,16 @@ class mapgen2 extends Sprite {
     controls.addChild(makeButton("Random", 125, y+22, 56,
                                  (Event e) {
                                    islandSeedInput.text =
-                                     ( (Math.random()*100000).toFixed(0)
-                                       + "-"
-                                       + (1 + Math.floor(9*Math.random())).toFixed(0) );
+                                       "1337-1";
+//                                     ( (Math.random()*100000).toFixed(0)
+  //                                     + "-"
+    //                                   + (1 + Math.floor(9*Math.random())).toFixed(0) );
                                    go(islandType, pointType, numPoints);
                                  }));
-    controls.addChild(mapTypes.Radial);
-    controls.addChild(mapTypes.Perlin);
-    controls.addChild(mapTypes.Square);
-    controls.addChild(mapTypes.Blob);
+    controls.addChild(mapTypes["Radial"]);
+    controls.addChild(mapTypes["Perlin"]);
+    controls.addChild(mapTypes["Square"]);
+    controls.addChild(mapTypes["Blob"]);
   }
 
 
@@ -1146,8 +1162,8 @@ class mapgen2 extends Sprite {
     Map pointTypes;
     
     markActivePointSelection(String newPointType) {
-      pointTypes[pointType].backgroundColor = 0xffffcc;
-      pointTypes[newPointType].backgroundColor = 0xffff00;
+      pointTypes[pointType].backgroundColor = 0xffffffcc;
+      pointTypes[newPointType].backgroundColor = 0xffffff00;
     }
 
     Function setPointsTo(String type){
@@ -1165,18 +1181,18 @@ class mapgen2 extends Sprite {
     };
     markActivePointSelection(pointType);
 
-    pointTypeLabel:TextField = makeButton("Point Selection:", 25, y+100, 150, null);
+    TextField pointTypeLabel = makeButton("Point Selection:", 25, y+100, 150, null);
     controls.addChild(pointTypeLabel);
-    controls.addChild(pointTypes.Random);
-    controls.addChild(pointTypes.Relaxed);
-    controls.addChild(pointTypes.Square);
-    controls.addChild(pointTypes.Hexagon);
+    controls.addChild(pointTypes["Random"]);
+    controls.addChild(pointTypes["Relaxed"]);
+    controls.addChild(pointTypes["Square"]);
+    controls.addChild(pointTypes["Hexagon"]);
 
     Map pointCounts;
     
     markActiveNumPoints(int newNumPoints) {
-      pointCounts[""+numPoints].backgroundColor = 0xffffcc;
-      pointCounts[""+newNumPoints].backgroundColor = 0xffff00;
+      pointCounts[numPoints.toString()].backgroundColor = 0xffffffcc;
+      pointCounts[newNumPoints.toString()].backgroundColor = 0xffffff00;
     }
 
     Function setNumPointsTo(int num){
@@ -1208,8 +1224,8 @@ class mapgen2 extends Sprite {
     Map views;
     
     markViewButton(String mode) {
-      views[mapMode].backgroundColor = 0xffffcc;
-      views[mode].backgroundColor = 0xffff00;
+      views[mapMode].backgroundColor = 0xffffffcc;
+      views[mode].backgroundColor = 0xffffff00;
     }
     Function switcher(String mode){
       return(Event e) {
@@ -1233,19 +1249,19 @@ class mapgen2 extends Sprite {
     
     controls.addChild(makeButton("View:", 50, y, 100, null));
     
-    controls.addChild(views.biome);
-    controls.addChild(views.smooth);
-    controls.addChild(views.slopes);
-    controls.addChild(views.elevation);
-    controls.addChild(views.moisture);
-    controls.addChild(views.polygons);
-    controls.addChild(views.watersheds);
+    controls.addChild(views["biome"]);
+    controls.addChild(views["smooth"]);
+    controls.addChild(views["slopes"]);
+    controls.addChild(views["elevation"]);
+    controls.addChild(views["moisture"]);
+    controls.addChild(views["polygons"]);
+    controls.addChild(views["watersheds"]);
   }
 
 
   addMiscLabels() {
     controls.addChild(makeButton("Distribution:", 50, 180, 100, null));
-    statusBar = makeButton("", SIZE/2-50, 10, 100, null);
+    statusBar = makeButton("", (SIZE/2-50).toInt(), 10, 100, null);
     addChild(statusBar);
   }
 
@@ -1256,25 +1272,25 @@ class mapgen2 extends Sprite {
              
     controls.addChild(makeButton("Elevation", 50, y+22, 100,
                         (Event e) {
-                          new FileReference().save(makeExport('elevation'), 'elevation.data');
+                          //TODO: new FileReference().save(makeExport('elevation'), 'elevation.data');
                         }));
     controls.addChild(makeButton("Moisture", 50, y+44, 100,
                         (Event e) {
-                          new FileReference().save(makeExport('moisture'), 'moisture.data');
+//TODO: new FileReference().save(makeExport('moisture'), 'moisture.data');
                         }));
     controls.addChild(makeButton("Overrides", 50, y+66, 100,
                         (Event e) {
-                          new FileReference().save(makeExport('overrides'), 'overrides.data');
+//TODO:                   new FileReference().save(makeExport('overrides'), 'overrides.data');
                         }));
 
     controls.addChild(makeButton("Export:", 25, y+100, 50, null));
     controls.addChild(makeButton("XML", 77, y+100, 35,
                         (Event e) {
-                          new FileReference().save(exportPolygons(), 'map.xml');
+//TODO:                   new FileReference().save(exportPolygons(), 'map.xml');
                         }));
     controls.addChild(makeButton("PNG", 114, y+100, 35,
                         (Event e) {
-                          new FileReference().save(exportPng(), 'map.png');
+//TODO:                   new FileReference().save(exportPng(), 'map.png');
                         }));
   }
   

@@ -23,18 +23,18 @@ class NoisyEdges {
    Edge edge;
    for(p in map.centers) {
        for(edge in p.borders) {
-           if (edge.d0 && edge.d1 && edge.v0 && edge.v1 && !path0[edge.index]) {
-             f:Number = NOISY_LINE_TRADEOFF;
-             t:Point = Point.interpolate(edge.v0.point, edge.d0.point, f);
-             q:Point = Point.interpolate(edge.v0.point, edge.d1.point, f);
-             r:Point = Point.interpolate(edge.v1.point, edge.d0.point, f);
-             s:Point = Point.interpolate(edge.v1.point, edge.d1.point, f);
+           if (edge.d0 != null && edge.d1 != null && edge.v0 != null && edge.v1 != null && path0[edge.index] == null) {
+             num f = NOISY_LINE_TRADEOFF;
+             Point t = Point.interpolate(edge.v0.point, edge.d0.point, f);
+             Point q = Point.interpolate(edge.v0.point, edge.d1.point, f);
+             Point r = Point.interpolate(edge.v1.point, edge.d0.point, f);
+             Point s = Point.interpolate(edge.v1.point, edge.d1.point, f);
 
-             minLength:int = 10;
+             int minLength = 10;
              if (edge.d0.biome != edge.d1.biome) minLength = 3;
              if (edge.d0.ocean && edge.d1.ocean) minLength = 100;
              if (edge.d0.coast || edge.d1.coast) minLength = 1;
-             if (edge.river || lava.lava[edge.index]) minLength = 1;
+             if (edge.river != null || lava.lava[edge.index] != null) minLength = 1;
              
              path0[edge.index] = buildNoisyLineSegments(random, edge.v0.point, t, edge.midpoint, q, minLength);
              path1[edge.index] = buildNoisyLineSegments(random, edge.v1.point, s, edge.midpoint, r, minLength);
