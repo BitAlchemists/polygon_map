@@ -72,13 +72,13 @@ class NoisyEdges {
      num t = 1.0 - random.nextDoubleRange(-0.4, 0.4);
 
      subdivide(A, Point.interpolate(G, B, s), H, Point.interpolate(E, D, t));
-     points.push(H);
+     points.add(H);
      subdivide(H, Point.interpolate(F, C, s), C, Point.interpolate(I, D, t));
    }
 
-   points.push(A);
+   points.add(A);
    subdivide(A, B, C, D);
-   points.push(C);
+   points.add(C);
    return points;
  }
 }

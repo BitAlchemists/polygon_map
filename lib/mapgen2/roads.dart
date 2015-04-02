@@ -39,22 +39,22 @@ class Roads {
    for(p in map.centers) {
        if (p.coast || p.ocean) {
          centerContour[p.index] = 1;
-         queue.push(p);
+         queue.add(p);
        }
      }
    
    while (queue.length > 0) {
-     p = queue.shift();
+     p = queue.removeAt(0);
      for(r in p.neighbors) {
-         newLevel = centerContour[p.index] || 0;
+         newLevel = centerContour[p.index] != null ? centerContour[p.index] : 0;
          while (r.elevation > elevationThresholds[newLevel] && !r.water) {
            // NOTE: extend the contour line past bodies of
            // water so that roads don't terminate inside lakes.
            newLevel += 1;
          }
-         if (newLevel < (centerContour[r.index] || 999)) {
+         if (newLevel < (centerContour[r.index] != null ? centerContour[r.index] : 999)) {
            centerContour[r.index] = newLevel;
-           queue.push(r);
+           queue.add(r);
          }
        }
    }
@@ -62,22 +62,22 @@ class Roads {
    // A corner's contour level is the MIN of its polygons
    for(p in map.centers) {
        for(q in p.corners) {
-           cornerContour[q.index] = Math.min(cornerContour[q.index] || 999,
-                                             centerContour[p.index] || 999);
+           cornerContour[q.index] = Math.min(cornerContour[q.index] != null ? cornerContour[q.index] : 999,
+                                             centerContour[p.index] != null ? centerContour[p.index] : 999);
          }
      }
 
    // Roads go between polygons that have different contour levels
    for(p in map.centers) {
        for(edge in p.borders) {
-           if (edge.v0 && edge.v1
+           if (edge.v0 != null && edge.v1 != null
                && cornerContour[edge.v0.index] != cornerContour[edge.v1.index]) {
              road[edge.index] = Math.min(cornerContour[edge.v0.index],
                                          cornerContour[edge.v1.index]);
              if (!roadConnections[p.index]) {
                roadConnections[p.index] = [];
              }
-             roadConnections[p.index].push(edge);
+             roadConnections[p.index].add(edge);
            }
          }
      }

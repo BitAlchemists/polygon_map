@@ -56,7 +56,7 @@ class PointSelector {
       List<Point> region;
       List<Point> points = generateRandom(size, seed)(numPoints);
       for (i = 0; i < NUM_LLOYD_RELAXATIONS; i++) {
-        voronoi = new Voronoi(points, null, new Rectangle(0, 0, size, size));
+        voronoi = new delaunay.Voronoi(points, null, new Rectangle(0, 0, size, size));
         for(p in points) {
             region = voronoi.region(p);
             p.x = 0.0;
@@ -67,7 +67,7 @@ class PointSelector {
               }
             p.x /= region.length;
             p.y /= region.length;
-            region.splice(0, region.length);
+            region.removeRange(0, region.length);
           }
         voronoi.dispose();
       }
@@ -80,10 +80,10 @@ class PointSelector {
   static Function generateSquare(int size, int seed){
     return (int numPoints) {
       List<Point> points = new List<Point>();
-      N:int = Math.sqrt(numPoints);
+      double N = Math.sqrt(numPoints);
       for (int x = 0; x < N; x++) {
         for (int y = 0; y < N; y++) {
-          points.push(new Point((0.5 + x)/N * size, (0.5 + y)/N * size));
+          points.add(new Point((0.5 + x)/N * size, (0.5 + y)/N * size));
         }
       }
       return points;
@@ -95,10 +95,10 @@ class PointSelector {
   static Function generateHexagon(int size, int seed){
     return (int numPoints) {
       List<Point> points = new List<Point>();
-      N:int = Math.sqrt(numPoints);
+      double N = Math.sqrt(numPoints);
       for (int x = 0; x < N; x++) {
         for (int y = 0; y < N; y++) {
-          points.push(new Point((0.5 + x)/N * size, (0.25 + 0.5*x%2 + y)/N * size));
+          points.add(new Point((0.5 + x)/N * size, (0.25 + 0.5*x%2 + y)/N * size));
         }
       }
       return points;

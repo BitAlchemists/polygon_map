@@ -585,6 +585,7 @@ class mapgen2 extends Sprite {
         if (edge.river > 0 && edge.river < 4
             && !edge.d0.water && !edge.d1.water
             && (edge.d0.elevation > 0.05 || edge.d1.elevation > 0.05)) {
+          
           Vector n = new Vector(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
           
           // previous: n.normalize(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));

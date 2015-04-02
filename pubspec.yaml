@@ -1,6 +1,7 @@
-name: sample_pubspec
+name: polygon_map
 description: A sample application
 dependencies:
   browser: any
+  disposable: any
   stagexl: any
   vector_math: any
