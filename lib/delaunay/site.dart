@@ -285,7 +285,7 @@ class Site implements ICoord
           }
           else if ((newCheck & BoundsCheck.LEFT) != 0)
           {
-            if (rightPoint.y - bounds.y + newPoint.y - bounds.y < bounds.height)
+            if (rightPoint.y - bounds.top + newPoint.y - bounds.top < bounds.height)
             {
               py = bounds.top;
             }
@@ -312,7 +312,7 @@ class Site implements ICoord
           }
           else if ((newCheck & BoundsCheck.RIGHT) != 0)
           {
-            if (rightPoint.y - bounds.y + newPoint.y - bounds.y < bounds.height)
+            if (rightPoint.y - bounds.top + newPoint.y - bounds.top < bounds.height)
             {
               py = bounds.top;
             }
@@ -339,7 +339,7 @@ class Site implements ICoord
           }
           else if ((newCheck & BoundsCheck.BOTTOM) != 0)
           {
-            if (rightPoint.x - bounds.x + newPoint.x - bounds.x < bounds.width)
+            if (rightPoint.x - bounds.left + newPoint.x - bounds.left < bounds.width)
             {
               px = bounds.left;
             }
@@ -366,7 +366,7 @@ class Site implements ICoord
           }
           else if ((newCheck & BoundsCheck.TOP) != 0)
           {
-            if (rightPoint.x - bounds.x + newPoint.x - bounds.x < bounds.width)
+            if (rightPoint.x - bounds.left + newPoint.x - bounds.left < bounds.width)
             {
               px = bounds.left;
             }

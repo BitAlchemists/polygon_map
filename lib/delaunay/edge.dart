@@ -273,8 +273,8 @@ part of delaunay;
      */
     clipVertices(Rectangle bounds)
     {
-      num xmin = bounds.x;
-      num ymin = bounds.y;
+      num xmin = bounds.left;
+      num ymin = bounds.top;
       num xmax = bounds.right;
       num ymax = bounds.bottom;
       

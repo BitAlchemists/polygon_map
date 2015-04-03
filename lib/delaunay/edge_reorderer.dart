@@ -36,16 +36,20 @@ class EdgeReorderer
   List<Edge> reorderEdges(List<Edge> origEdges, Type criterion)
   {
     int i;
-    int j;
     int n = origEdges.length;
     Edge edge;
     // we're going to reorder the edges in order of traversal
     List<bool> done = new List<bool>();
     int nDone = 0;
+    
+    //TODO: WHAT?
+    /*
     for(bool b in done)
     {
       b = false;
     }
+    */
+    
     List<Edge> newEdges = new List<Edge>();
     
     i = 0;

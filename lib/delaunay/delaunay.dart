@@ -1,7 +1,6 @@
 library delaunay;
 
 // http://nodename.github.io/as3delaunay/
-import "package:disposable/disposable.dart";
 import "package:stagexl/stagexl.dart";
 import "package:polygon_map/geom/geom.dart";
 import "dart:math" as Math;
@@ -16,8 +15,21 @@ part "i_coord.dart";
 part "site.dart";
 part "edge_reorderer.dart";
 part "triangle.dart";
+part "kruskal.dart";
+part "halfedge_priority_queue.dart";
+part "edge_list.dart";
 
 Math.Random random = new Math.Random();
+
+List<LineSegment> delaunayLinesForEdges(List<Edge> edges)
+{
+  List<LineSegment> segments = new List<LineSegment>();
+  for(Edge edge in edges)
+  {
+    segments.add(edge.delaunayLine());
+  }
+  return segments;
+}
 
 List<Edge> selectEdgesForSitePoint(Point coord, List<Edge> edgesToTest)
 {
@@ -45,7 +57,7 @@ List<Edge> selectNonIntersectingEdges(BitmapData keepOutMask, List<Edge> edgesTo
     BitmapData delaunayLineBmp = edge.makeDelaunayLineBmp();
     Bitmap keepOutMaskBitmap = new Bitmap(keepOutMask);
     Bitmap delaunayLineBitmap = new Bitmap(delaunayLineBmp);
-    //TODO: evaluate
+    //TODO: evaluate, maybe we need this: https://github.com/bp74/StageXL/issues/32
     bool notIntersecting = keepOutMaskBitmap.hitTestInput(zeroPoint.x, zeroPoint.y) != null && delaunayLineBitmap.hitTestInput(zeroPoint.x, zeroPoint.y) != null;
     return notIntersecting;
   }

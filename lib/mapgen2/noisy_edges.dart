@@ -50,7 +50,7 @@ class NoisyEdges {
    List<Point> points = new List<Point>();
 
    subdivide(Point A, Point B, Point C, Point D) {
-     if (A.subtract(C).length < minLength || B.subtract(D).length < minLength) {
+     if ((A-C).magnitude < minLength || (B-D).magnitude < minLength) {
        return;
      }
 

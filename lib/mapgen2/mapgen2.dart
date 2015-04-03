@@ -7,6 +7,7 @@ import "../delaunay/delaunay.dart" as delaunay;
 import "../PM_PRNG/PM_PRNG.dart";
 import "../stagexl_plus/stagexl_plus.dart" as stagexl_plus;
 import "package:vector_math/vector_math.dart";
+import "package:polygon_map/geom/geom.dart";
 
 part "world_map.dart";
 part "island_shape.dart";
@@ -151,7 +152,6 @@ class mapgen2 extends Sprite {
   void newIsland(String newIslandType, String newPointType, int newNumPoints) {
     int seed = 0;
     int variant = 0;
-    num t = getTimer();
     
     if (islandSeedInput.text.length == 0) {
       islandSeedInput.text = (new Math.Random().nextDouble()*100000).toStringAsFixed(0);
@@ -537,13 +537,13 @@ class mapgen2 extends Sprite {
             if (gradientFillProperty != null) {
               // We'll draw two triangles: center - corner0 -
               // midpoint and center - midpoint - corner1.
-              Corner corner0 = edge.v0;
-              Corner corner1 = edge.v1;
+ //             Corner corner0 = edge.v0;
+ //             Corner corner1 = edge.v1;
 
               // We pick the midpoint elevation/moisture between
               // corners instead of between polygon centers because
               // the resulting gradients tend to be smoother.
-              Point midpoint = edge.midpoint;
+//              Point midpoint = edge.midpoint;
               /* TODO: reimplement
               num midpointAttr = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
               
@@ -667,7 +667,7 @@ class mapgen2 extends Sprite {
             // each edge to the center
             for(edge1 in p.borders) {
                 if (roads.road[edge1.index] > 0) {
-                  d = 0.25*edge1.midpoint.subtract(p.point).length;
+                  d = 0.25 * (edge1.midpoint - p.point).magnitude;
                   A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
                   graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
                   graphics.quadraticCurveTo(A.x, A.y, p.point.x, p.point.y);

@@ -153,14 +153,14 @@ class Voronoi
     return delaunayLinesForEdges(hullEdges());
   }
   
-  List<Edge> _hullEdges()
+  List<Edge> hullEdges()
   {
-    bool myTest(Edge edge, int index, List<Edge> edges)
+    bool myTest(Edge edge)
     {
       return (edge.isPartOfConvexHull());
     }
-    
-    return _edges.filter(myTest);
+
+    return _edges.where(myTest);
   }
 
   List<Point> hullPointsInOrder()
@@ -173,14 +173,14 @@ class Voronoi
       return points;
     }
     
-    reorderer:EdgeReorderer = new EdgeReorderer(hullEdges, Site);
+    EdgeReorderer reorderer = new EdgeReorderer(hullEdges, Site);
     hullEdges = reorderer.edges;
     List<LR> orientations = reorderer.edgeOrientations;
     reorderer.dispose();
     
-    orientation:LR;
+    LR orientation;
 
-    n:int = hullEdges.length;
+    int n = hullEdges.length;
     for (int i = 0; i < n; ++i)
     {
       Edge edge = hullEdges[i];
@@ -226,7 +226,7 @@ class Voronoi
   }
 
   
-  Site leftRegion(Halfedge he)
+  Site leftRegion(Halfedge he, Site bottomMostSite)
   {
     Edge edge = he.edge;
     if (edge == null)
@@ -236,7 +236,7 @@ class Voronoi
     return edge.site(he.leftRight);
   }
   
-  Site rightRegion(Halfedge he)
+  Site rightRegion(Halfedge he, Site bottomMostSite)
   {
     Edge edge = he.edge;
     if (edge == null)
@@ -255,11 +255,11 @@ class Voronoi
     Halfedge lbnd, rbnd, llbnd, rrbnd, bisector;
     Edge edge;
     
-    dataBounds:Rectangle = _sites.getSitesBounds();
+    Rectangle dataBounds = _sites.getSitesBounds();
     
-    sqrt_nsites:int = int(Math.sqrt(_sites.length + 4));
-    heap:HalfedgePriorityQueue = new HalfedgePriorityQueue(dataBounds.y, dataBounds.height, sqrt_nsites);
-    edgeList:EdgeList = new EdgeList(dataBounds.x, dataBounds.width, sqrt_nsites);
+    int sqrt_nsites = Math.sqrt(_sites.length + 4).toInt();
+    HalfedgePriorityQueue heap = new HalfedgePriorityQueue(dataBounds.top, dataBounds.height, sqrt_nsites);
+    EdgeList edgeList = new EdgeList(dataBounds.left, dataBounds.width, sqrt_nsites);
     List<Halfedge> halfEdges = new List<Halfedge>();
     List<Vertex> vertices = new List<Vertex>();
     
@@ -334,8 +334,8 @@ class Voronoi
         llbnd = lbnd.edgeListLeftNeighbor;
         rbnd = lbnd.edgeListRightNeighbor;
         rrbnd = rbnd.edgeListRightNeighbor;
-        bottomSite = leftRegion(lbnd);
-        topSite = rightRegion(rbnd);
+        bottomSite = leftRegion(lbnd, bottomMostSite);
+        topSite = rightRegion(rbnd, bottomMostSite);
         // these three sites define a Delaunay triangle
         // (not actually using these for anything...)
         //_triangles.add(new Triangle(bottomSite, topSite, rightRegion(lbnd)));
@@ -403,7 +403,7 @@ class Voronoi
     vertices.length = 0;
   }
 
-  static num compareByYThenX(Site s1, Site s2)
+  static num compareByYThenX(Site s1, dynamic s2)
   {
     if (s1.y < s2.y) return -1;
     if (s1.y > s2.y) return 1;

@@ -43,8 +43,8 @@ class WorldMap {
     
     // Random parameters governing the overall shape of the island
     newIsland(String islandSize, String pointType, int numPoints_, int seed, int variant) {
-      islandShape = IslandShape['make'+islandType](seed);
-      pointSelector = PointSelector['generate'+pointType](SIZE, seed);
+      islandShape = IslandShape.makePerlin(seed); //TODO: evaluate - make island shape based on selection
+      pointSelector = PointSelector.generateRelaxed(SIZE, seed); //TODO: evaluate - make island shape based on selection
       needsMoreRandomness = PointSelector.needsMoreRandomness(pointType);
       numPoints = numPoints_;
       mapRandom.seed = variant;
@@ -57,42 +57,42 @@ class WorldMap {
       Edge edge;
 
       // Break cycles so the garbage collector will release data.
-      if (points) {
-        points.splice(0, points.length);
+      if (points != null) {
+        points.removeRange(0, points.length);
       }
-      if (edges) {
+      if (edges != null) {
         for(edge in edges) {
             edge.d0 = edge.d1 = null;
             edge.v0 = edge.v1 = null;
           }
-        edges.splice(0, edges.length);
+        edges.removeRange(0, edges.length);
       }
-      if (centers) {
+      if (centers != null) {
         for(p in centers) {
-            p.neighbors.splice(0, p.neighbors.length);
-            p.corners.splice(0, p.corners.length);
-            p.borders.splice(0, p.borders.length);
+            p.neighbors.removeRange(0, p.neighbors.length);
+            p.corners.removeRange(0, p.corners.length);
+            p.borders.removeRange(0, p.borders.length);
           }
-        centers.splice(0, centers.length);
+        centers.removeRange(0, centers.length);
       }
-      if (corners) {
+      if (corners != null) {
         for(q in corners) {
-            q.adjacent.splice(0, q.adjacent.length);
-            q.touches.splice(0, q.touches.length);
-            q.protrudes.splice(0, q.protrudes.length);
+            q.adjacent.removeRange(0, q.adjacent.length);
+            q.touches.removeRange(0, q.touches.length);
+            q.protrudes.removeRange(0, q.protrudes.length);
             q.downslope = null;
             q.watershed = null;
           }
-        corners.splice(0, corners.length);
+        corners.removeRange(0, corners.length);
       }
 
       // Clear the previous graph data.
-      if (!points) points = new List<Point>();
-      if (!edges) edges = new List<Edge>();
-      if (!centers) centers = new List<Center>();
-      if (!corners) corners = new List<Corner>();
+      if (points == null) points = new List<Point>();
+      if (edges == null) edges = new List<Edge>();
+      if (centers == null) centers = new List<Center>();
+      if (corners == null) corners = new List<Corner>();
       
-      System.gc();
+      //System.gc();
     }
       
 
@@ -100,12 +100,12 @@ class WorldMap {
       List stages = [];
 
       timeIt(String name, Function fn) {
-        num t = getTimer();
+        //num t = getTimer();
         fn();
       }
       
       // Generate the initial random set of points
-      stages.push
+      stages.add
         (["Place points...",
           () {
             reset();
@@ -119,10 +119,10 @@ class WorldMap {
       // Voronoi polygons, a reverse map from those four points back
       // to the edge, a map from these four points to the points
       // they connect to (both along the edge and crosswise).
-      stages.push
+      stages.add
         ( ["Build graph...",
              () {
-               Voronoi voronoi = new Voronoi(points, null, new Rectangle(0, 0, SIZE, SIZE));
+               delaunay.Voronoi voronoi = new delaunay.Voronoi(points, null, new Rectangle(0, 0, SIZE, SIZE));
                buildGraph(points, voronoi);
                improveCorners();
                voronoi.dispose();
@@ -130,7 +130,7 @@ class WorldMap {
                points = null;
           }]);
 
-      stages.push
+      stages.add
         (["Assign elevations...",
              () {
                // Determine the elevations and water at Voronoi corners.
@@ -160,7 +160,7 @@ class WorldMap {
           }]);
              
 
-      stages.push
+      stages.add
         (["Assign moisture...",
              () {
                // Determine downslope paths.
@@ -183,7 +183,7 @@ class WorldMap {
                assignPolygonMoisture();
              }]);
 
-      stages.push
+      stages.add
         (["Decorate map...",
              () {
                assignBiomes();
@@ -235,7 +235,7 @@ class WorldMap {
       // The edge midpoints were computed for the old corners and need
       // to be recomputed.
       for(edge in edges) {
-          if (edge.v0 && edge.v1) {
+          if (edge.v0 != null && edge.v1 != null) {
             edge.midpoint = Point.interpolate(edge.v0.point, edge.v1.point, 0.5);
           }
         }
@@ -251,7 +251,7 @@ class WorldMap {
       List locations = [];
       for(q in corners) {
           if (!q.ocean && !q.coast) {
-            locations.push(q);
+            locations.add(q);
           }
         }
       return locations;
@@ -266,13 +266,13 @@ class WorldMap {
     // edge.{v0,v1} and its dual Delaunay triangle edge edge.{d0,d1}.
     // For boundary polygons, the Delaunay edge will have one null
     // point, and the Voronoi edge may be null.
-    buildGraph(List<Point> points, Voronoi voronoi) {
+    buildGraph(List<Point> points, delaunay.Voronoi voronoi) {
       Center p;
-      Corner q;
+      //Corner q;
       Point point;
-      Point other;
+      //Point other;
       List<delaunay.Edge> libedges = voronoi.edges();
-      centerLookup:Dictionary = new Dictionary();
+      Map centerLookup = new Map();
 
       // Build Center objects forof the points, and a lookup map
       // to find those Center objects again as we build the graph
@@ -283,7 +283,7 @@ class WorldMap {
           p.neighbors = new  List<Center>();
           p.borders = new List<Edge>();
           p.corners = new List<Corner>();
-          centers.push(p);
+          centers.add(p);
           centerLookup[point] = p;
         }
       
@@ -299,55 +299,59 @@ class WorldMap {
       // x value, and then we only have to look at other Points in
       // nearby buckets. When we fail to find one, we'll create a new
       // Corner object.
-      _cornerMap:Array = [];
+      List _cornerMap = [];
       Corner makeCorner(Point point) {
         Corner q;
         
         if (point == null) return null;
-        for (int bucket = int(point.x)-1; bucket <= int(point.x)+1; bucket++) {
+        //TODO: point<dynamic>, do we need to cast to int?
+        int bucket;
+        for (bucket = (point.x-1); bucket <= (point.x+1); bucket++) {
           for(q in _cornerMap[bucket]) {
-              dnum x = point.x - q.point.x;
-              dnum y = point.y - q.point.y;
-              if (dx*dx + dy*dy < 1e-6) {
+              num x = point.x - q.point.x;
+              num y = point.y - q.point.y;
+              if (x*x + y*y < 1e-6) {
                 return q;
               }
             }
         }
-        bucket = int(point.x);
+        bucket = point.x;
         if (!_cornerMap[bucket]) _cornerMap[bucket] = [];
         q = new Corner();
         q.index = corners.length;
-        corners.push(q);
+        corners.add(q);
         q.point = point;
         q.border = (point.x == 0 || point.x == SIZE
                     || point.y == 0 || point.y == SIZE);
         q.touches = new List<Center>();
         q.protrudes = new List<Edge>();
         q.adjacent = new List<Corner>();
-        _cornerMap[bucket].push(q);
+        _cornerMap[bucket].add(q);
         return q;
       }
 
       // Helper s for the following for loop; ideally these
       // would be inlined
       addToCornerList(List<Corner> v, Corner x) {
-        if (x != null && v.indexOf(x) < 0) { v.push(x); }
+        if (x != null && v.indexOf(x) < 0) { v.add(x); }
       }
       addToCenterList(List<Center> v, Center x) {
-        if (x != null && v.indexOf(x) < 0) { v.push(x); }
+        if (x != null && v.indexOf(x) < 0) { v.add(x); }
       }
           
       for(delaunay.Edge libedge in libedges) {
-          dedge:LineSegment = libedge.delaunayLine();
-          vedge:LineSegment = libedge.voronoiEdge();
+        LineSegment dedge = libedge.delaunayLine();
+        LineSegment vedge = libedge.voronoiEdge();
 
           // Fill the graph data. Make an Edge object corresponding to
           // the edge from the voronoi library.
           Edge edge = new Edge();
           edge.index = edges.length;
           edge.river = 0;
-          edges.push(edge);
-          edge.midpoint = vedge.p0 && vedge.p1 && Point.interpolate(vedge.p0, vedge.p1, 0.5);
+          edges.add(edge);
+          // TODO: evaluate
+          // edge.midpoint = vedge.p0 && vedge.p1 && Point.interpolate(vedge.p0, vedge.p1, 0.5);
+          edge.midpoint = (vedge.p0 != null && vedge.p1 != null) ? Point.interpolate(vedge.p0, vedge.p1, 0.5) : null;
 
           // Edges point to corners. Edges point to centers. 
           edge.v0 = makeCorner(vedge.p0);
@@ -356,10 +360,10 @@ class WorldMap {
           edge.d1 = centerLookup[dedge.p1];
 
           // Centers point to edges. Corners point to edges.
-          if (edge.d0 != null) { edge.d0.borders.push(edge); }
-          if (edge.d1 != null) { edge.d1.borders.push(edge); }
-          if (edge.v0 != null) { edge.v0.protrudes.push(edge); }
-          if (edge.v1 != null) { edge.v1.protrudes.push(edge); }
+          if (edge.d0 != null) { edge.d0.borders.add(edge); }
+          if (edge.d1 != null) { edge.d1.borders.add(edge); }
+          if (edge.v0 != null) { edge.v0.protrudes.add(edge); }
+          if (edge.v1 != null) { edge.v1.protrudes.add(edge); }
 
           // Centers point to centers.
           if (edge.d0 != null && edge.d1 != null) {
@@ -417,9 +421,9 @@ class WorldMap {
           // The edges of the map are elevation 0
           if (q.border) {
             q.elevation = 0.0;
-            queue.push(q);
+            queue.add(q);
           } else {
-            q.elevation = Infinity;
+            q.elevation = double.INFINITY;
           }
         }
       // Traverse the graph and assign elevations topoint. As we
@@ -427,13 +431,13 @@ class WorldMap {
       // guarantees that rivers always have a way down to the coast by
       // going downhill (no local minima).
       while (queue.length > 0) {
-        q = queue.shift();
+        q = queue.removeAt(0);
 
         for(s in q.adjacent) {
             // Every step up is epsilon over water or 1 over land. The
             // number doesn't matter because we'll rescale the
             // elevations later.
-            newElevation:Number = 0.01 + q.elevation;
+            double newElevation = 0.01 + q.elevation;
             if (!q.water && !s.water) {
               newElevation += 1;
               if (needsMoreRandomness) {
@@ -451,7 +455,7 @@ class WorldMap {
             // that we can process its neighbors too.
             if (newElevation < s.elevation) {
               s.elevation = newElevation;
-              queue.push(s);
+              queue.add(s);
             }
           }
       }
@@ -466,12 +470,14 @@ class WorldMap {
     redistributeElevations(List locations) {
       // SCALE_FACTOR increases the mountain area. At 1.0 the maximum
       // elevation barely shows up on the map, so we set it to 1.1.
-      SCALE_FACTOR:Number = 1.1;
+      double SCALE_FACTOR = 1.1;
       int i;
       num y;
       num x;
 
-      locations.sortOn('elevation', Array.NUMERIC);
+      //TODO: evaluate
+      locations.sort((a,b) => a.elevation.compare(b.elevation));      
+      //locations.sortOn('elevation', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
         // Let y(x) be the total area that we want at elevation <= x.
         // We want the higher elevations to occur less than lower
@@ -493,7 +499,9 @@ class WorldMap {
     // Change the overall distribution of moisture to be evenly distributed.
     redistributeMoisture(List locations) {
       int i;
-      locations.sortOn('moisture', Array.NUMERIC);
+      //TODO:evaluate
+      locations.sort((a,b) => a.moisture.compare(b.moisture));
+      //locations.sortOn('moisture', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
         locations[i].moisture = i/(locations.length-1);
       }
@@ -521,7 +529,7 @@ class WorldMap {
                 p.border = true;
                 p.ocean = true;
                 q.water = true;
-                queue.push(p);
+                queue.add(p);
               }
               if (q.water) {
                 numWater += 1;
@@ -530,24 +538,27 @@ class WorldMap {
           p.water = (p.ocean || numWater >= p.corners.length * LAKE_THRESHOLD);
         }
       while (queue.length > 0) {
-        p = queue.shift();
+        p = queue.removeAt(0);
         for(r in p.neighbors) {
             if (r.water && !r.ocean) {
               r.ocean = true;
-              queue.push(r);
+              queue.add(r);
             }
           }
       }
+      
+      int numOcean;
+      int numLand;
       
       // Set the polygon attribute 'coast' based on its neighbors. If
       // it has at least one ocean and at least one land neighbor,
       // then this is a coastal polygon.
       for(p in centers) {
-          numOcean:int = 0;
-          numLand:int = 0;
+        numOcean = 0;
+        numLand = 0;
           for(r in p.neighbors) {
-              numOcean += int(r.ocean);
-              numLand += int(!r.water);
+              numOcean += r.ocean ? 1 : 0;
+              numLand += r.water ? 0 : 1;
             }
           p.coast = (numOcean > 0) && (numLand > 0);
         }
@@ -561,8 +572,8 @@ class WorldMap {
           numOcean = 0;
           numLand = 0;
           for(p in q.touches) {
-              numOcean += int(p.ocean);
-              numLand += int(!p.water);
+            numOcean += r.ocean ? 1 : 0;
+            numLand += r.water ? 0 : 1;
             }
           q.ocean = (numOcean == q.touches.length);
           q.coast = (numOcean > 0) && (numLand > 0);
@@ -643,7 +654,7 @@ class WorldMap {
       // How big iswatershed?
       for(q in corners) {
           r = q.watershed;
-          r.watershed_size = 1 + (r.watershed_size || 0);
+          r.watershed_size = 1 + (r.watershed_size != null ? r.watershed_size : 0);
         }
     }
 
@@ -665,8 +676,8 @@ class WorldMap {
           }
           edge = lookupEdgeFromCorner(q, q.downslope);
           edge.river = edge.river + 1;
-          q.river = (q.river || 0) + 1;
-          q.downslope.river = (q.downslope.river || 0) + 1;  // TODO: fix double count
+          q.river = (q.river != null ? q.river : 0) + 1;
+          q.downslope.river = (q.downslope.river != null ? q.downslope.river : 0) + 1;  // TODO: fix double count
           q = q.downslope;
         }
       }
@@ -685,19 +696,19 @@ class WorldMap {
       for(q in corners) {
           if ((q.water || q.river > 0) && !q.ocean) {
             q.moisture = q.river > 0? Math.min(3.0, (0.2 * q.river)) : 1.0;
-            queue.push(q);
+            queue.add(q);
           } else {
             q.moisture = 0.0;
           }
         }
       while (queue.length > 0) {
-        q = queue.shift();
+        q = queue.removeAt(0);
 
         for(r in q.adjacent) {
             newMoisture = q.moisture * 0.9;
             if (newMoisture > r.moisture) {
               r.moisture = newMoisture;
-              queue.push(r);
+              queue.add(r);
             }
           }
       }
@@ -731,34 +742,34 @@ class WorldMap {
     // on low/high elevation and low/medium/high moisture. This is
     // roughly based on the Whittaker diagram but adapted to fit the
     // needs of the island map generator.
-    static String getBiome(Center p) {
+    static Biome getBiome(Center p) {
       if (p.ocean) {
-        return 'OCEAN';
+        return Biome.OCEAN;
       } else if (p.water) {
-        if (p.elevation < 0.1) return 'MARSH';
-        if (p.elevation > 0.8) return 'ICE';
-        return 'LAKE';
+        if (p.elevation < 0.1) return Biome.MARSH;
+        if (p.elevation > 0.8) return Biome.ICE;
+        return Biome.LAKE;
       } else if (p.coast) {
-        return 'BEACH';
+        return Biome.BEACH;
       } else if (p.elevation > 0.8) {
-        if (p.moisture > 0.50) return 'SNOW';
-        else if (p.moisture > 0.33) return 'TUNDRA';
-        else if (p.moisture > 0.16) return 'BARE';
-        else return 'SCORCHED';
+        if (p.moisture > 0.50) return Biome.SNOW;
+        else if (p.moisture > 0.33) return Biome.TUNDRA;
+        else if (p.moisture > 0.16) return Biome.BARE;
+        else return Biome.SCORCHED;
       } else if (p.elevation > 0.6) {
-        if (p.moisture > 0.66) return 'TAIGA';
-        else if (p.moisture > 0.33) return 'SHRUBLAND';
-        else return 'TEMPERATE_DESERT';
+        if (p.moisture > 0.66) return Biome.TAIGA;
+        else if (p.moisture > 0.33) return Biome.SHRUBLAND;
+        else return Biome.TEMPERATE_DESERT;
       } else if (p.elevation > 0.3) {
-        if (p.moisture > 0.83) return 'TEMPERATE_RAIN_FOREST';
-        else if (p.moisture > 0.50) return 'TEMPERATE_DECIDUOUS_FOREST';
-        else if (p.moisture > 0.16) return 'GRASSLAND';
-        else return 'TEMPERATE_DESERT';
+        if (p.moisture > 0.83) return Biome.TEMPERATE_RAIN_FOREST;
+        else if (p.moisture > 0.50) return Biome.TEMPERATE_DECIDUOUS_FOREST;
+        else if (p.moisture > 0.16) return Biome.GRASSLAND;
+        else return Biome.TEMPERATE_DESERT;
       } else {
-        if (p.moisture > 0.66) return 'TROPICAL_RAIN_FOREST';
-        else if (p.moisture > 0.33) return 'TROPICAL_SEASONAL_FOREST';
-        else if (p.moisture > 0.16) return 'GRASSLAND';
-        else return 'SUBTROPICAL_DESERT';
+        if (p.moisture > 0.66) return Biome.TROPICAL_RAIN_FOREST;
+        else if (p.moisture > 0.33) return Biome.TROPICAL_SEASONAL_FOREST;
+        else if (p.moisture > 0.16) return Biome.GRASSLAND;
+        else return Biome.SUBTROPICAL_DESERT;
       }
     }
     
