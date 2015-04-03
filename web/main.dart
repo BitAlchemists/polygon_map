@@ -16,6 +16,10 @@ void main() {
   shape.graphics.fillColor(Color.Red);
   stage.addChild(shape);
   
+  stage.scaleMode = StageScaleMode.NO_SCALE;
+  stage.align = StageAlign.TOP_LEFT;
+  
   mapgen2 map = new mapgen2();
   stage.addChild(map);
+  map.go(map.islandType, map.pointType, map.numPoints);
 }

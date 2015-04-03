@@ -106,7 +106,7 @@ class mapgen2 extends Sprite {
   // This is the current map style. UI buttons change this, and it
   // persists when you make a new map.
   String mapMode = 'smooth';
-  stagexl_plus.Bitmap noiseLayer = new stagexl_plus.Bitmap(new BitmapData(SIZE, SIZE));
+  Bitmap noiseLayer = new Bitmap(new BitmapData(SIZE, SIZE));
   
   /*
   // These store 3d rendering data
@@ -124,11 +124,8 @@ class mapgen2 extends Sprite {
 
 
   mapgen2() {
-    stage.scaleMode = StageScaleMode.NO_SCALE;
-    stage.align = StageAlign.TOP_LEFT;
-
     addChild(noiseLayer);
-    noiseLayer.bitmapData.noise(555, 128-10, 128+10, 7, true);
+    noiseLayer.bitmapData = stagexl_plus.noise(noiseLayer.bitmapData, 555, 128-10, 128+10, 7, true);
     
     //TODO: it seems this feature is not supported in StageXL and propably never will due to the limitations of the HTML Canvas
     //noiseLayer.blendMode = BlendMode.HARDLIGHT;
@@ -143,8 +140,6 @@ class mapgen2 extends Sprite {
     addMiscLabels();
 
     map = new WorldMap(SIZE);
-    go(islandType, pointType, numPoints);
-
   }
 
   
@@ -309,14 +304,13 @@ class mapgen2 extends Sprite {
       return _biomeList[bucket];
     }
 
-    List computeHistogram(Function bucketFn) {
+    Map computeHistogram(Function bucketFn) {
       Center p;
-      List histogram;
+      Map histogram = {};
       int bucket;
-      histogram = [];
       for (p in map.centers) {
           bucket = bucketFn(p);
-          if (bucket >= 0) histogram[bucket] = ((bucket < histogram.length) ? histogram[bucket] : 0) + 1;
+          if (bucket >= 0) histogram[bucket] = (histogram[bucket] != null ? histogram[bucket] : 0) + 1;
         }
       return histogram;
     }
@@ -324,20 +318,15 @@ class mapgen2 extends Sprite {
     drawHistogram(num x, num y, bucketFn, colorFn,
                            num width, num height) {
       num scale;
-      int i;
-      List histogram = computeHistogram(bucketFn);
+      Map histogram = computeHistogram(bucketFn);
       
       scale = 0.0;
-      for (i = 0; i < histogram.length; i++) {
-        scale = Math.max(scale, (i < histogram.length) ? histogram[i] : 0);
-      }
-      for (i = 0; i < histogram.length; i++) {
-        if (histogram[i]) {
-          graphics.rect(SIZE+x+i*width/histogram.length, y+height,
-                            Math.max(0, width/histogram.length-1), -height*histogram[i]/scale);
-          graphics.fillColor(colorFn(i));
-        }
-      }
+      histogram.forEach((k, v) => scale = Math.max(scale, (k < histogram.length) ? v : 0));
+      histogram.forEach((k, v){
+        graphics.rect(SIZE+x+k*width/histogram.length, y+height,
+                          Math.max(0, width/histogram.length-1), -height*v/scale);
+        graphics.fillColor(colorFn(k));
+      });      
     }
 
     drawDistribution(num x, num y, bucketFn, colorFn,
@@ -345,20 +334,18 @@ class mapgen2 extends Sprite {
       num scale;
       int i;
       num w;
-      List histogram = computeHistogram(bucketFn);
+      Map histogram = computeHistogram(bucketFn);
     
       scale = 0.0;
-      for (i = 0; i < histogram.length; i++) {
-        scale += (i < histogram.length) ? histogram[i] : 0.0;
-      }
-      for (i = 0; i < histogram.length; i++) {
-        if (histogram[i]) {
-          w = histogram[i]/scale*width;
-          graphics.rect(SIZE+x, y, Math.max(0, w-1), height);
-          x += w;
-          graphics.fillColor(colorFn(i));
-        }
-      }
+      
+      histogram.forEach((k, v) => scale += v);
+      histogram.forEach((k, v){
+        w = v/scale*width;
+        graphics.rect(SIZE+x, y, Math.max(0, w-1), height);
+        x += w;
+        graphics.fillColor(colorFn(i));        
+      });
+
     }
 
     num x = 23;
@@ -632,7 +619,7 @@ class mapgen2 extends Sprite {
     }
     
     for(p in map.centers) {
-        if (roads.roadConnections[p.index]) {
+        if (roads.roadConnections[p.index] != null) {
           if (roads.roadConnections[p.index].length == 2) {
             // Regular road: draw a spline from one edge to the other.
             edges = p.borders;
@@ -753,7 +740,7 @@ class mapgen2 extends Sprite {
     }
     
     for(p in map.centers) {
-        color = p.biome.color != null ? p.biome.color : 
+        color = p.biome != null ? p.biome.color : 
           (p.ocean != null ? displayColors.OCEAN : 
             (p.water != null ? displayColors.RIVER : 0xffffffff));
         for(edge in p.borders) {
@@ -1077,7 +1064,7 @@ class mapgen2 extends Sprite {
 */
 
   // Make a button or label. If the callback is null, it's just a label.
-  TextField makeButton(String label, int x, int y, int width, callback) {
+  TextField makeButton(String label, num x, num y, num width, callback) {
     TextField button = new TextField();
     //TextFormat format = new TextFormat("Arial");
 //    format.font = "Arial";

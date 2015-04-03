@@ -11,11 +11,11 @@ class Roads {
  // 2, or 3, corresponding to the three contour levels. Note that
  // these are sparse arrays, only filled in where there are roads.
  List road;  // edge index -> int contour level
- List roadConnections;  // center index -> array of Edges with roads
+ Map<int, List> roadConnections;  // center index -> array of Edges with roads
 
  Roads() {
    road = [];
-   roadConnections = [];
+   roadConnections = {};
  }
 
  // We want to mark different elevation zones so that we can draw
@@ -74,7 +74,7 @@ class Roads {
                && cornerContour[edge.v0.index] != cornerContour[edge.v1.index]) {
              road[edge.index] = Math.min(cornerContour[edge.v0.index],
                                          cornerContour[edge.v1.index]);
-             if (!roadConnections[p.index]) {
+             if (roadConnections[p.index] == null) {
                roadConnections[p.index] = [];
              }
              roadConnections[p.index].add(edge);

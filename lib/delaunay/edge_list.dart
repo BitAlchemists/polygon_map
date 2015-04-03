@@ -2,8 +2,8 @@ part of delaunay;
 
 class EdgeList
 {
-  num _deltax;
-  num _xmin;
+  double _deltax;
+  double _xmin;
   
   int _hashsize;
   List<Halfedge> _hash;
@@ -99,7 +99,7 @@ class EdgeList
     Halfedge halfEdge;
   
     /* Use hash table to get close to desired halfedge */
-    bucket = (p.x - _xmin)/_deltax * _hashsize;
+    bucket = ((p.x - _xmin)/_deltax * _hashsize).toInt();
     if (bucket < 0)
     {
       bucket = 0;

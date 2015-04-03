@@ -39,16 +39,14 @@ class EdgeReorderer
     int n = origEdges.length;
     Edge edge;
     // we're going to reorder the edges in order of traversal
-    List<bool> done = new List<bool>();
+    List<bool> done = new List<bool>(n);
     int nDone = 0;
     
-    //TODO: WHAT?
-    /*
-    for(bool b in done)
+    for(int i = 0; i < n; i++)
     {
-      b = false;
+      done[i] = false;
     }
-    */
+    
     
     List<Edge> newEdges = new List<Edge>();
     
@@ -75,6 +73,7 @@ class EdgeReorderer
         {
           continue;
         }
+        
         edge = origEdges[i];
         ICoord leftPoint = (criterion == Vertex) ? edge.leftVertex : edge.leftSite;
         ICoord rightPoint = (criterion == Vertex) ? edge.rightVertex : edge.rightSite;

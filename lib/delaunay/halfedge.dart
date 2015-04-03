@@ -28,7 +28,7 @@ class Halfedge
   Vertex vertex;
   
   // the vertex's y-coordinate in the transformed Voronoi space V*
-  num ystar;
+  double ystar;
 
   Halfedge._internal([Edge edge = null, LR lr = null])
   {
@@ -41,6 +41,7 @@ class Halfedge
     leftRight = lr;
     nextInPriorityQueue = null;
     vertex = null;
+    ystar = 0.0;
     return this;
   }
   

@@ -299,14 +299,18 @@ class WorldMap {
       // x value, and then we only have to look at other Points in
       // nearby buckets. When we fail to find one, we'll create a new
       // Corner object.
-      List _cornerMap = [];
+      Map _cornerMap = {};
       Corner makeCorner(Point point) {
         Corner q;
         
         if (point == null) return null;
-        //TODO: point<dynamic>, do we need to cast to int?
+
         int bucket;
-        for (bucket = (point.x-1); bucket <= (point.x+1); bucket++) {
+        for (bucket = (point.x-1).toInt(); bucket <= (point.x+1); bucket++) {
+          if(_cornerMap[bucket] == null) {
+            continue;
+          }
+          
           for(q in _cornerMap[bucket]) {
               num x = point.x - q.point.x;
               num y = point.y - q.point.y;
@@ -315,8 +319,8 @@ class WorldMap {
               }
             }
         }
-        bucket = point.x;
-        if (!_cornerMap[bucket]) _cornerMap[bucket] = [];
+        bucket = point.x.toInt();
+        if (_cornerMap[bucket] == null) _cornerMap[bucket] = [];
         q = new Corner();
         q.index = corners.length;
         corners.add(q);

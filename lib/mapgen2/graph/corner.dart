@@ -19,4 +19,15 @@ part of mapgen2;
     Corner downslope;  // pointer to adjacent corner most downhill
     Corner watershed;  // pointer to coastal corner, or null
     int watershed_size;
+    
+    Corner(){
+      ocean = false;
+      water = false;
+      coast = false;
+      border = false;
+      elevation = 0.0;
+      moisture = 0.0;
+      river = 0;
+      watershed_size = 0;
+    }
   }

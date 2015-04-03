@@ -15,4 +15,13 @@ part of mapgen2;
     List<Center> neighbors;
     List<Edge> borders;
     List<Corner> corners;
+    
+    Center(){
+      water = false;
+      ocean = false;
+      coast = false;
+      border = false;
+      elevation = 0.0;
+      moisture = 0.0;
+    }
   }
