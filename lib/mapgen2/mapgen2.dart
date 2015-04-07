@@ -202,7 +202,7 @@ class mapgen2 extends Sprite {
                      map.go(0, 1);
                      drawMap('polygons');
                    });
-/*
+
     commandExecute("Building graph...",
                    () {
                      map.go(1, 2);
@@ -225,8 +225,6 @@ class mapgen2 extends Sprite {
                      noisyEdges.buildNoisyEdges(map, lava, map.mapRandom);
                      drawMap(mapMode);
                    });
-                   
-    */
   }
 
 
@@ -749,12 +747,13 @@ class mapgen2 extends Sprite {
         }
     }
     
-    return;
+    
     
     for(p in map.centers) {
         color = p.biome != null ? p.biome.color : 
           (p.ocean != null ? displayColors.OCEAN : 
             (p.water != null ? displayColors.RIVER : 0xffffffff));
+        graphics.beginPath();
         for(edge in p.borders) {
             if (edge.v0 != null && edge.v1 != null) {
               graphics.moveTo(p.point.x, p.point.y);
@@ -773,9 +772,13 @@ class mapgen2 extends Sprite {
             }
           }
         graphics.fillColor(interpolateColor(color, 0xffdddddd, 0.2));
+        
+        graphics.beginPath();
         graphics.circle(p.point.x, p.point.y, 1.3);
         graphics.fillColor(p.water ? 0xb0003333 : 0xb0000000);
+        
         for(q in p.corners) {
+          graphics.beginPath();
             graphics.rect(q.point.x-0.7, q.point.y-0.7, 1.5, 1.5);
             graphics.fillColor(q.water ? 0xff0000ff : 0xff009900);
           }
