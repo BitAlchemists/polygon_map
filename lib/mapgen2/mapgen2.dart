@@ -322,6 +322,7 @@ class mapgen2 extends Sprite {
       scale = 0.0;
       histogram.forEach((k, v) => scale = Math.max(scale, (k < histogram.length) ? v : 0));
       histogram.forEach((k, v){
+        graphics.beginPath();
         graphics.rect(SIZE+x+k*width/histogram.length, y+height,
                           Math.max(0, width/histogram.length-1), -height*v/scale);
         graphics.fillColor(colorFn(k));
@@ -340,6 +341,7 @@ class mapgen2 extends Sprite {
       histogram.forEach((k, v) => scale += v);
       histogram.forEach((k, v){
         w = v/scale*width;
+        graphics.beginPath();
         graphics.rect(SIZE+x, y, Math.max(0, w-1), height);
         x += w;
         graphics.fillColor(colorFn(i));        
@@ -385,15 +387,13 @@ class mapgen2 extends Sprite {
   }
 
   
-  /* todo: reimplement 
+   
   // Helper for drawing triangles with gradients. This
   // sets up the fill on the graphics object, and then
   // calls fillto draw the desired path.
   drawGradientTriangle(Graphics graphics,
                                         Vector3 v1, Vector3 v2, Vector3 v3,
                                         List colors, drawFunction) {
-    Matrix m = new Matrix.fromIdentity();
-
     // Center of triangle:
     Vector3 V = v1.add(v2).add(v3);
     V.scale(1/3.0);
@@ -408,6 +408,9 @@ class mapgen2 extends Sprite {
     // Center of the color gradient
     Vector3 C = new Vector3(V.x - G.x*((V.z-0.5)/G.length/G.length), V.y - G.y*((V.z-0.5)/G.length/G.length), 0.0);
 
+    graphics.beginPath();
+    drawFunction();
+    
     if (G.length < 1e-6) {
       // If the gradient vector is small, there's not much
       // difference in colors across this triangle. Use a plain
@@ -423,10 +426,12 @@ class mapgen2 extends Sprite {
           color = interpolateColor(colors[1], colors[2], V.z*2-1);
         }
       }
-      graphics.beginFill(color);
+      graphics.fillColor(color);
     } else {
       // The gradient box is weird to set up, so we let Flash set up
       // a basic matrix and then we alter it:
+      /** TODO: reimplement
+      Matrix m = new Matrix.fromIdentity();
       m.createGradientBox(1, 1, 0, 0, 0);
       m.translate(-0.5, -0.5);
       m.scale((1/G.length), (1/G.length));
@@ -434,12 +439,16 @@ class mapgen2 extends Sprite {
       m.translate(C.x, C.y);
       List alphas = colors.map((_) { return 1.0; });
       List spread = colors.map((color) { return 255*colors.indexOf(color)/(colors.length-1); });
-      graphics.beginGradientFill(GradientType.LINEAR, colors, alphas, spread, m, SpreadMethod.PAD);
+      */
+      GraphicsGradient gradient = new GraphicsGradient.linear(0,0,G.x,G.y);
+      gradient.addColorStop(0.0, 0xffffffff);
+      gradient.addColorStop(1.0, 0xffff00ff);
+      graphics.fillGradient(gradient);
+      //graphics.beginGradientFill(GradientType.LINEAR, colors, alphas, spread, m, SpreadMethod.PAD);
     }
-    drawFunction();
-    graphics.endFill();
+    
   }
-  */
+  
   
 
   // Draw the map in the current map mode
@@ -488,6 +497,7 @@ class mapgen2 extends Sprite {
 
     // My Voronoi polygon rendering doesn't handle the boundary
     // polygons, so I just fill everything with ocean first.
+    graphics.beginPath();
     graphics.rect(0, 0, SIZE, SIZE);
     graphics.fillColor(displayColors.OCEAN);
     
@@ -574,6 +584,7 @@ class mapgen2 extends Sprite {
         if (edge.river > 0 && edge.river < 4
             && !edge.d0.water && !edge.d1.water
             && (edge.d0.elevation > 0.05 || edge.d1.elevation > 0.05)) {
+          graphics.beginPath();
           
           Vector n = new Vector(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
           
@@ -643,8 +654,10 @@ class mapgen2 extends Sprite {
                     B = addVectorToPoint(normalTowards(edge2, p.point, d), edge2.midpoint);
                     C = Point.interpolate(A, B, 0.5);
                     graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
+                    graphics.beginPath();
                     graphics.quadraticCurveTo(A.x, A.y, C.x, C.y);
                     graphics.strokeColor(roads.road[edge1.index].color, 1.1);
+                    graphics.beginPath();
                     graphics.quadraticCurveTo(B.x, B.y, edge2.midpoint.x, edge2.midpoint.y);
                     graphics.strokeColor(roads.road[edge2.index].color, 1.1);
                   }
@@ -659,6 +672,7 @@ class mapgen2 extends Sprite {
                   d = 0.25 * (edge1.midpoint - p.point).magnitude;
                   A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
                   graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
+                  graphics.beginPath();
                   graphics.quadraticCurveTo(A.x, A.y, p.point.x, p.point.y);
                   graphics.strokeColor(roads.road[edge1.index].colors, 1.4);
                 }
@@ -715,6 +729,7 @@ class mapgen2 extends Sprite {
             
             graphics.moveTo(noisyEdges.path0[edge.index][0].x,
                             noisyEdges.path0[edge.index][0].y);
+            graphics.beginPath();
             drawPathForwards(graphics, noisyEdges.path0[edge.index]);
             drawPathBackwards(graphics, noisyEdges.path1[edge.index]);
             graphics.strokeColor(color, width);
@@ -801,6 +816,7 @@ class mapgen2 extends Sprite {
           w1 = watersheds.watersheds[edge.d1.index];
           if (w0 != w1) {
             graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
+            graphics.beginPath();
             graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
             graphics.strokeColor((0xff * 0.1*Math.sqrt((map.corners[w0].watershed_size != null ? map.corners[w0].watershed_size : 1) + (map.corners[w1].watershed.watershed_size != null ? map.corners[w1].watershed.watershed_size : 1))).toInt() << 24, 3.5);
           }
@@ -810,6 +826,7 @@ class mapgen2 extends Sprite {
     for(edge in map.edges) {
         if (edge.river != null) {
           graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
+          graphics.beginPath();
           graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
           graphics.strokeColor(0xff6699ff);
         }
