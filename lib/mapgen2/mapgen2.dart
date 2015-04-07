@@ -216,7 +216,7 @@ class mapgen2 extends Sprite {
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-
+/*
     commandExecute("Edges...",
                    () {
                      roads.createRoads(map);
@@ -225,7 +225,9 @@ class mapgen2 extends Sprite {
                      noisyEdges.buildNoisyEdges(map, lava, map.mapRandom);
                      drawMap(mapMode);
                    });
-  }
+
+  */
+    }
 
 
   // Command queue is processed on ENTER_FRAME. If it's empty,
@@ -536,8 +538,8 @@ class mapgen2 extends Sprite {
             if (gradientFillProperty != null) {
               // We'll draw two triangles: center - corner0 -
               // midpoint and center - midpoint - corner1.
- //             Corner corner0 = edge.v0;
- //             Corner corner1 = edge.v1;
+              Corner corner0 = edge.v0;
+              Corner corner1 = edge.v1;
 
               // We pick the midpoint elevation/moisture between
               // corners instead of between polygon centers because
@@ -584,7 +586,7 @@ class mapgen2 extends Sprite {
         if (edge.river > 0 && edge.river < 4
             && !edge.d0.water && !edge.d1.water
             && (edge.d0.elevation > 0.05 || edge.d1.elevation > 0.05)) {
-          graphics.beginPath();
+          
           
           Vector n = new Vector(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
           
@@ -593,6 +595,7 @@ class mapgen2 extends Sprite {
           
           // TODO: is this correct?
           //graphics.lineStyle(1.1, colors.BRIDGE, 1.0, false, LineScaleMode.NORMAL, CapsStyle.SQUARE);
+          graphics.beginPath();
           graphics.moveTo(edge.midpoint.x - n.x, edge.midpoint.y - n.y);
           graphics.lineTo(edge.midpoint.x + n.x, edge.midpoint.y + n.y);
           //graphics.lineStyle();
