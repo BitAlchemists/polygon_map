@@ -179,8 +179,6 @@ class mapgen2 extends Sprite {
   
   void graphicsReset() {
     graphics.clear();
-    graphics.rect(0, 0, 2000, 2000);
-    graphics.fillColor(0xffbbbbaa);
     graphics.rect(0, 0, SIZE, SIZE);
     graphics.fillColor(displayColors.OCEAN);
   }
@@ -204,7 +202,7 @@ class mapgen2 extends Sprite {
                      map.go(0, 1);
                      drawMap('polygons');
                    });
-
+/*
     commandExecute("Building graph...",
                    () {
                      map.go(1, 2);
@@ -227,6 +225,8 @@ class mapgen2 extends Sprite {
                      noisyEdges.buildNoisyEdges(map, lava, map.mapRandom);
                      drawMap(mapMode);
                    });
+                   
+    */
   }
 
 
@@ -267,6 +267,7 @@ class mapgen2 extends Sprite {
     displayColors.TEMPERATE_DECIDUOUS_FOREST, displayColors.GRASSLAND, displayColors.SUBTROPICAL_DESERT,
     displayColors.TROPICAL_RAIN_FOREST, displayColors.TROPICAL_SEASONAL_FOREST];
   drawHistograms() {
+    print("drawHistograms()");
     // There are pairs ofs forchart. The bucket
     // maps the polygon Center to a small int, and the
     // color maps the int to a color.
@@ -361,11 +362,13 @@ class mapgen2 extends Sprite {
   
   // Helpers for rendering paths
   drawPathForwards(Graphics graphics, List<Point> path) {
+    print("drawPathForwards()");
     for (int i = 0; i < path.length; i++) {
       graphics.lineTo(path[i].x, path[i].y);
     }
   }
   drawPathBackwards(Graphics graphics, List<Point> path) {
+    print("drawPathBackwards()");
     for (int i = path.length-1; i >= 0; i--) {
       graphics.lineTo(path[i].x, path[i].y);
     }
@@ -443,10 +446,11 @@ class mapgen2 extends Sprite {
 
   // Draw the map in the current map mode
   drawMap(String mode) {
+    print("drawMap()");
     graphicsReset();
     noiseLayer.visible = true;
     
-    drawHistograms();
+    //drawHistograms();
     
     if (mode == 'polygons') {
       noiseLayer.visible = false;
@@ -576,7 +580,7 @@ class mapgen2 extends Sprite {
           Vector n = new Vector(-(edge.v1.point.y - edge.v0.point.y), edge.v1.point.x - edge.v0.point.x);
           
           // previous: n.normalize(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
-          n = n.normalize().scale(0.25 + (roads.road[edge.index]? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
+          n = n.normalize().scale(0.25 + (roads.road.length >= edge.index ? 0.5 : 0) + 0.75*Math.sqrt(edge.river));
           
           // TODO: is this correct?
           //graphics.lineStyle(1.1, colors.BRIDGE, 1.0, false, LineScaleMode.NORMAL, CapsStyle.SQUARE);
@@ -729,15 +733,23 @@ class mapgen2 extends Sprite {
     Point point;
     int color;
 
+    print("Begin renderDebugPolygons");
+    
     if (map.centers.length == 0) {
       // We're still constructing the map so we may have some points
+      graphics.beginPath();
       graphics.rect(0, 0, SIZE, SIZE);
       graphics.fillColor(0xffdddddd);
+      
+      
       for(point in map.points) {
+        graphics.beginPath();
           graphics.circle(point.x, point.y, 1.3);
           graphics.fillColor(0xff000000);
         }
     }
+    
+    return;
     
     for(p in map.centers) {
         color = p.biome != null ? p.biome.color : 
@@ -768,6 +780,8 @@ class mapgen2 extends Sprite {
             graphics.fillColor(q.water ? 0xff0000ff : 0xff009900);
           }
       }
+    
+    print("End renderDebugPolygons");
   }
 
 

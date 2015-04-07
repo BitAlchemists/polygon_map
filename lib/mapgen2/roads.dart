@@ -33,8 +33,8 @@ class Roads {
    Edge edge;
    int newLevel;
    List elevationThresholds = [0, 0.05, 0.37, 0.64];
-   List cornerContour = [];  // corner index -> int contour level
-   List centerContour = [];  // center index -> int contour level
+   Map cornerContour = {};  // corner index -> int contour level
+   Map centerContour = {};  // center index -> int contour level
  
    for(p in map.centers) {
        if (p.coast || p.ocean) {
@@ -47,7 +47,8 @@ class Roads {
      p = queue.removeAt(0);
      for(r in p.neighbors) {
          newLevel = centerContour[p.index] != null ? centerContour[p.index] : 0;
-         while (r.elevation > elevationThresholds[newLevel] && !r.water) {
+         double elevationTreshold = newLevel < elevationThresholds.length ? elevationThresholds[newLevel] : 0.0;
+         while (r.elevation > elevationTreshold && !r.water) {
            // NOTE: extend the contour line past bodies of
            // water so that roads don't terminate inside lakes.
            newLevel += 1;

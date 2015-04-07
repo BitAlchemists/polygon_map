@@ -480,7 +480,7 @@ class WorldMap {
       num x;
 
       //TODO: evaluate
-      locations.sort((a,b) => a.elevation.compare(b.elevation));      
+      locations.sort((Corner a, Corner b) => (a.elevation - b.elevation).toInt());      
       //locations.sortOn('elevation', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
         // Let y(x) be the total area that we want at elevation <= x.
@@ -504,7 +504,7 @@ class WorldMap {
     redistributeMoisture(List locations) {
       int i;
       //TODO:evaluate
-      locations.sort((a,b) => a.moisture.compare(b.moisture));
+      locations.sort((Corner a, Corner b) => (a.moisture - b.moisture).toInt());
       //locations.sortOn('moisture', Array.NUMERIC);
       for (i = 0; i < locations.length; i++) {
         locations[i].moisture = i/(locations.length-1);
