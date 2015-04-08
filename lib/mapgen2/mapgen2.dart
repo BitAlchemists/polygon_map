@@ -768,22 +768,29 @@ class mapgen2 extends Sprite {
     
     
     for(Center p in map.centers) {   
+      
+      
       // Fill Polygon
-      /*
-        int fillColor = p.biome != null ? p.biome.color : 
-          (p.ocean != null ? displayColors.OCEAN : 
-            (p.water != null ? displayColors.RIVER : 0xffffffff));
+        if(p.borders != null && p.borders.length > 0 && p.borders[0].v0 != null)
+        {
+          
+          
+          int fillColor = p.biome != null ? p.biome.color : 
+            (p.ocean != null ? displayColors.OCEAN : 
+              (p.water != null ? displayColors.RIVER : 0xffffffff));
 
-        graphics.moveTo(p.borders[0].v0.point.x, p.borders[0].v0.point.y);
-        graphics.beginPath();
-        for(edge in p.borders) {
-            if (edge.v0 != null && edge.v1 != null) {              
-              //graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
-              graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
+          graphics.beginPath();
+          graphics.moveTo(p.borders[0].v0.point.x, p.borders[0].v0.point.x);
+          for(edge in p.borders) {
+              if (edge.v0 != null && edge.v1 != null) {              
+                //graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
+                graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
+              }
             }
-          }
-        graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
-*/
+          graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
+          
+        }
+
        
         for(Edge edge in p.borders) {
             if (edge.v0 != null && edge.v1 != null) {
