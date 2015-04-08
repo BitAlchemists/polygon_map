@@ -2,30 +2,33 @@ part of mapgen2;
 
 
 class WorldMap {
-    static num LAKE_THRESHOLD = 0.3;  // 0 to 1, fraction of water corners for water polygon
+    /// 0 to 1, fraction of water corners for water polygon
+    static num LAKE_THRESHOLD = 0.3;
 
-    // Passed in by the caller:
+    /// Passed in by the caller:
     num SIZE;
 
-    // Island shape is controlled by the islandRandom seed and the
+    /** Island shape is controlled by the islandRandom seed and the
     // type of island, passed in when we set the island shape. The
     // islandShape uses both of them to determine whether any
-    // point should be water or land.
+    // point should be water or land. **/
     Function islandShape;
 
-    // Island details are controlled by this random generator. The
+    /** Island details are controlled by this random generator. The
     // initial map upon loading is always deterministic, but
     // subsequent maps reset this random number generator with a
-    // random seed.
+    // random seed. **/
     PM_PRNG mapRandom = new PM_PRNG();
-    bool needsMoreRandomness; // see comment in PointSelector
+    
+    /// see comment in pointSelector
+    bool needsMoreRandomness; 
 
-    // Point selection is random for the original article, with Lloyd
+    /** Point selection is random for the original article, with Lloyd
     // Relaxation, but there are other ways of choosing points. Grids
     // in particular can be much simpler to start with, because you
     // don't need Voronoi at all. HOWEVER for ease of implementation,
     // I continue to use Voronoi here, to reuse the graph building
-    // code. If you're using a grid, generate the graph directly.
+    // code. If you're using a grid, generate the graph directly. **/
     Function pointSelector;
     int numPoints;
     
@@ -526,9 +529,9 @@ class WorldMap {
       Center r;
       int numWater;
       
-      for(p in centers) {
+      for(Center p in centers) {
           numWater = 0;
-          for(q in p.corners) {
+          for(Corner q in p.corners) {
               if (q.border) {
                 p.border = true;
                 p.ocean = true;

@@ -96,7 +96,7 @@ class mapgen2 extends Sprite {
 
   // Point distribution
   String pointType = 'Relaxed';
-  int numPoints = 2000;
+  int numPoints = 22;
   
   // GUI for controlling the map generation and view
   Sprite controls = new Sprite();
@@ -209,14 +209,14 @@ class mapgen2 extends Sprite {
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-    
+/*    
     commandExecute("Features...",
                    () {
                      map.go(2, 5);
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-/*
+
     commandExecute("Edges...",
                    () {
                      roads.createRoads(map);
@@ -767,39 +767,59 @@ class mapgen2 extends Sprite {
     
     
     
-    for(p in map.centers) {
-        color = p.biome != null ? p.biome.color : 
+    for(Center p in map.centers) {   
+      // Fill Polygon
+      /*
+        int fillColor = p.biome != null ? p.biome.color : 
           (p.ocean != null ? displayColors.OCEAN : 
             (p.water != null ? displayColors.RIVER : 0xffffffff));
+
+        graphics.moveTo(p.borders[0].v0.point.x, p.borders[0].v0.point.y);
         graphics.beginPath();
         for(edge in p.borders) {
-            if (edge.v0 != null && edge.v1 != null) {
-              graphics.moveTo(p.point.x, p.point.y);
-              graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
-              int color = 0;
-              double width = 0.0;
-              if (edge.river > 0) {
-                color = displayColors.RIVER;
-                width = 2.0;
-              } else {
-                color = 0x66000000;
-                width = 0.0;
-              }
+            if (edge.v0 != null && edge.v1 != null) {              
+              //graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
               graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
-              graphics.strokeColor(color, width);
             }
           }
-        graphics.fillColor(interpolateColor(color, 0xffdddddd, 0.2));
+        graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
+*/
+       
+        for(Edge edge in p.borders) {
+            if (edge.v0 != null && edge.v1 != null) {
+              //graphics.moveTo(p.point.x, p.point.y);
+              int strokeColor = 0;
+              double width = 0.0;
+              if (edge.river > 0) {
+                strokeColor = displayColors.RIVER;
+                width = 2.0;
+              } else {
+                strokeColor = 0x66000000;
+                width = 0.0;
+              }
+
+              graphics.beginPath();
+              graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
+              graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
+              graphics.strokeColor(strokeColor, width);
+            }
+          }
+          
+           
         
+      //draw every center
         graphics.beginPath();
-        graphics.circle(p.point.x, p.point.y, 1.3);
-        graphics.fillColor(p.water ? 0xb0003333 : 0xb0000000);
-        
+               graphics.circle(p.point.x, p.point.y, 1.3);
+               graphics.fillColor(p.water ? 0xb0003333 : 0xb0000000);
+               
+        //draw every corner
         for(q in p.corners) {
           graphics.beginPath();
             graphics.rect(q.point.x-0.7, q.point.y-0.7, 1.5, 1.5);
             graphics.fillColor(q.water ? 0xff0000ff : 0xff009900);
           }
+        
+        
       }
     
     print("End renderDebugPolygons");
@@ -1213,11 +1233,18 @@ class mapgen2 extends Sprite {
     controls.addChild(pointTypes["Square"]);
     controls.addChild(pointTypes["Hexagon"]);
 
-    Map pointCounts;
+    Map<int, TextField> pointCounts;
     
     markActiveNumPoints(int newNumPoints) {
-      pointCounts[numPoints.toString()].backgroundColor = 0xffffffcc;
-      pointCounts[newNumPoints.toString()].backgroundColor = 0xffffff00;
+      TextField previousButton = pointCounts[numPoints.toString()];
+      if(previousButton != null){
+        pointCounts[numPoints.toString()].backgroundColor = 0xffffffcc;        
+      }
+      
+      TextField nextButton = pointCounts[newNumPoints.toString()]; 
+      if(nextButton != null){
+        nextButton.backgroundColor = 0xffffff00; 
+      }
     }
 
     Function setNumPointsTo(int num){

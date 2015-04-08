@@ -30,4 +30,6 @@ part of mapgen2;
       river = 0;
       watershed_size = 0;
     }
+    
+    String toString() => point != null ? ("Corner - x:${point.x.toInt().toString()} y:${point.y.toInt().toString()}")  : "Corner - not initialized";
   }
