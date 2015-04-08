@@ -3,5 +3,6 @@ description: A sample application
 dependencies:
   browser: any
   disposable: any
+  noise: any
   stagexl: any
   vector_math: any

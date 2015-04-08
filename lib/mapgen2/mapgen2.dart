@@ -92,8 +92,8 @@ class mapgen2 extends Sprite {
   // type of island. The islandShape uses both of them to
   // determine whether any point should be water or land.
   String islandType = 'Perlin';
-  //static String islandSeedInitial = "85882-8";
-  static String islandSeedInitial = "133-7";
+  static String islandSeedInitial = "85882-8";
+  //static String islandSeedInitial = "133-7";
 
   // Point distribution
   String pointType = 'Relaxed';
@@ -1147,6 +1147,8 @@ class mapgen2 extends Sprite {
     }
     return button;
   }
+  
+  Math.Random random = new Math.Random();
 
   
   addIslandShapeButtons() {
@@ -1194,10 +1196,9 @@ class mapgen2 extends Sprite {
     controls.addChild(makeButton("Random", 125, y+22, 56,
                                  (Event e) {
                                    islandSeedInput.text =
-                                       "1337-1";
-//                                     ( (Math.random()*100000).toFixed(0)
-  //                                     + "-"
-    //                                   + (1 + Math.floor(9*Math.random())).toFixed(0) );
+                                     ( random.nextInt(100000).toString()
+                                       + "-"
+                                       + random.nextInt(10).toString());
                                    go(islandType, pointType, numPoints);
                                  }));
     controls.addChild(mapTypes["Radial"]);

@@ -2,10 +2,40 @@ library stagexl_plus;
 
 import "dart:math" as Math;
 import "package:stagexl/stagexl.dart" as stagexl;
+import "package:noise/noise.dart";
 
 part "perlin_noise.dart";
 
 perlinNoise(stagexl.BitmapData bitmapData, num baseX, num baseY, num numOctaves, num randomSeed, bool stitch, bool fractalNoise, [num channelOptions, bool grayScale, Map offsets]){
+  
+  var octave = makeOctave2(simplex2, numOctaves, 0.5);
+  
+  List colors = [];
+  
+  for ( int y = 0; y < bitmapData.height; y++ )
+  {    
+    for ( int x = 0; x < bitmapData.width; x++ )
+    {
+      int value = ((octave(x.toDouble(), y.toDouble()) + 1) / 2 * 255).toInt();
+      //colors.add(value);
+      int color = 0xff << 24 | value << 16 | value << 8 | value;
+      bitmapData.setPixel32( x, y, 0xff000000 | color << 16 | color << 8 | color );
+    }
+  }
+  
+  /*
+  colors.sort((int a, int b)=> a.compareTo(b));
+  int median = colors[(colors.length ~/ 2.0)];
+  int lowest = colors.first;
+  int highest = colors.last;
+  double average = colors.fold(0.0, (previous, value)=>previous + value) / colors.length;
+  
+  print("lowest $lowest, highest $highest, average $average, median $median");
+  */
+  return;
+  
+
+  
   OptimizedPerlin perlin = new OptimizedPerlin();
   perlin.octaves = numOctaves;
   perlin.seed = randomSeed;

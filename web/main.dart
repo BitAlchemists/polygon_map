@@ -1,6 +1,7 @@
 import 'dart:html' as html;
 import 'package:stagexl/stagexl.dart';
 import "package:polygon_map/mapgen2/mapgen2.dart";
+//import "package:polygon_map/stagexl_plus/stagexl_plus.dart";
 
 void main() {
 
@@ -10,16 +11,19 @@ void main() {
   var renderLoop = new RenderLoop();
   renderLoop.addStage(stage);
   
-  // draw a red circle
-  var shape = new Shape();
-  shape.graphics.circle(100, 100, 60);
-  shape.graphics.fillColor(Color.Red);
-  stage.addChild(shape);
-  
   stage.scaleMode = StageScaleMode.NO_SCALE;
   stage.align = StageAlign.TOP_LEFT;
+  /*
+  BitmapData perlin = new BitmapData(64,64);
+  perlinNoise(perlin, 64, 64, 8, 234, false, true);
+  Bitmap bitmap = new Bitmap(perlin);
+  bitmap.addTo(stage);
+  
+   */
   
   mapgen2 map = new mapgen2();
   stage.addChild(map);
   map.go(map.islandType, map.pointType, map.numPoints);
+  /*
+   */
 }

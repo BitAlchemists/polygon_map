@@ -48,7 +48,8 @@ static Function makePerlin(int seed){
 
   return (Point q) {
     num c = (perlin.getPixel(((q.x+1)*128).toInt(), ((q.y+1)*128).toInt()) & 0xff) / 255.0;
-    return c > (0.3+0.3*q.magnitude*q.magnitude);
+    num threshold = 0.3+0.3*q.magnitude*q.magnitude;
+    return c > threshold;
   };
 }
 
