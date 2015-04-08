@@ -92,12 +92,12 @@ class mapgen2 extends Sprite {
   // type of island. The islandShape uses both of them to
   // determine whether any point should be water or land.
   String islandType = 'Perlin';
-  //static String islandSeedInitial = "85882-8";
-  static String islandSeedInitial = "133-7";
+  static String islandSeedInitial = "85882-8";
+  //static String islandSeedInitial = "133-7";
 
   // Point distribution
   String pointType = 'Relaxed';
-  int numPoints = 3;
+  int numPoints = 2000;
   
   // GUI for controlling the map generation and view
   Sprite controls = new Sprite();
@@ -210,14 +210,14 @@ class mapgen2 extends Sprite {
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-/*    
+    
     commandExecute("Features...",
                    () {
                      map.go(2, 5);
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-
+/*
     commandExecute("Edges...",
                    () {
                      roads.createRoads(map);
@@ -380,13 +380,15 @@ class mapgen2 extends Sprite {
   // TODO: do we need to cover alpha?
   // Helper for color manipulation. When f==0: color0, f==1: color1
   int interpolateColor(int color0, int color1, num f) {
-    int r = ((1-f)*(color0 >> 16) + f*(color1 >> 16)).toInt();
+    int a = ((1-f)*(color0 >> 24) + f*(color1 >> 24)).toInt();
+    int r = ((1-f)*((color0 >> 16) & 0xff) + f*((color1 >> 16) & 0xff)).toInt();
     int g = ((1-f)*((color0 >> 8) & 0xff) + f*((color1 >> 8) & 0xff)).toInt();
     int b = ((1-f)*(color0 & 0xff) + f*(color1 & 0xff)).toInt();
+    if (a > 255) a = 255;
     if (r > 255) r = 255;
     if (g > 255) g = 255;
     if (b > 255) b = 255;
-    return (0xff << 24) | (r << 16) | (g << 8) | b;
+    return (a << 24) | (r << 16) | (g << 8) | b;
   }
 
   
@@ -776,15 +778,15 @@ class mapgen2 extends Sprite {
             (p.ocean != null ? displayColors.OCEAN : 
               (p.water != null ? displayColors.RIVER : 0xffffffff));
 
-          graphics.beginPath();
-          graphics.moveTo(p.point.x, p.point.y);
           for(edge in p.borders) {
               if (edge.v0 != null && edge.v1 != null) {              
+                graphics.beginPath();
+                graphics.moveTo(p.point.x, p.point.y);
                 graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
                 graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
+                graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
               }
             }
-          graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
           
 
        
