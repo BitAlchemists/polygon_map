@@ -92,11 +92,12 @@ class mapgen2 extends Sprite {
   // type of island. The islandShape uses both of them to
   // determine whether any point should be water or land.
   String islandType = 'Perlin';
-  static String islandSeedInitial = "85882-8";
+  //static String islandSeedInitial = "85882-8";
+  static String islandSeedInitial = "133-7";
 
   // Point distribution
   String pointType = 'Relaxed';
-  int numPoints = 22;
+  int numPoints = 3;
   
   // GUI for controlling the map generation and view
   Sprite controls = new Sprite();
@@ -771,25 +772,20 @@ class mapgen2 extends Sprite {
       
       
       // Fill Polygon
-        if(p.borders != null && p.borders.length > 0 && p.borders[0].v0 != null)
-        {
-          
-          
           int fillColor = p.biome != null ? p.biome.color : 
             (p.ocean != null ? displayColors.OCEAN : 
               (p.water != null ? displayColors.RIVER : 0xffffffff));
 
           graphics.beginPath();
-          graphics.moveTo(p.borders[0].v0.point.x, p.borders[0].v0.point.x);
+          graphics.moveTo(p.point.x, p.point.y);
           for(edge in p.borders) {
               if (edge.v0 != null && edge.v1 != null) {              
-                //graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
+                graphics.lineTo(edge.v0.point.x, edge.v0.point.y);
                 graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
               }
             }
           graphics.fillColor(interpolateColor(fillColor, 0xffdddddd, 0.2));
           
-        }
 
        
         for(Edge edge in p.borders) {
