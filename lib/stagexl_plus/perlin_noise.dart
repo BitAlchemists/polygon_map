@@ -6,6 +6,8 @@ Author URI:   http://www.sjeiti.com/
 Original code port from http://mrl.nyu.edu/~perlin/noise/
 and some help from http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
 AS3 optimizations by Mario Klingemann http://www.quasimondo.com
+ * 
+ * http://www.quasimondo.com/examples/OptimizedPerlin.as
 */
 part of stagexl_plus;
 

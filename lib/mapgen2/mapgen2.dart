@@ -92,8 +92,8 @@ class mapgen2 extends Sprite {
   // type of island. The islandShape uses both of them to
   // determine whether any point should be water or land.
   String islandType = 'Perlin';
-  static String islandSeedInitial = "85882-8";
-  //static String islandSeedInitial = "133-7";
+  //static String islandSeedInitial = "85882-8";
+  static String islandSeedInitial = "133-7";
 
   // Point distribution
   String pointType = 'Relaxed';
@@ -126,7 +126,7 @@ class mapgen2 extends Sprite {
 
   mapgen2() {
     addChild(noiseLayer);
-    noiseLayer.bitmapData = stagexl_plus.noise(noiseLayer.bitmapData, 555, 128-10, 128+10, 7, true);
+    stagexl_plus.noise(noiseLayer.bitmapData, 555, 128-10, 128+10, 7, true);
     
     //TODO: it seems this feature is not supported in StageXL and propably never will due to the limitations of the HTML Canvas
     //noiseLayer.blendMode = BlendMode.HARDLIGHT;
