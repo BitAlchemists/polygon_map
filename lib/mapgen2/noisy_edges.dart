@@ -7,8 +7,8 @@ part of mapgen2;
 class NoisyEdges {
  static num NOISY_LINE_TRADEOFF = 0.5;  // low: jagged vedge; high: jagged dedge
  
- List path0 = [];  // edge index -> List<Point>
- List path1 = [];  // edge index -> List<Point>
+ Map path0 = {};  // edge index -> List<Point>
+ Map path1 = {};  // edge index -> List<Point>
  
  NoisyEdges() {
  }

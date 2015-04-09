@@ -7,8 +7,8 @@ part of mapgen2;
 
 
 class Watersheds {
- List lowestCorner = [];  // polygon index -> corner index
- List watersheds = [];  // polygon index -> corner index
+ Map lowestCorner = {};  // polygon index -> corner index
+ Map watersheds = {};  // polygon index -> corner index
 
  Watersheds();
  

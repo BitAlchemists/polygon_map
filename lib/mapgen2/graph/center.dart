@@ -24,4 +24,6 @@ part of mapgen2;
       elevation = 0.0;
       moisture = 0.0;
     }
+    
+    String toString() => point != null ? ("Center - x:${point.x.toInt().toString()} y:${point.y.toInt().toString()}")  : "Center - not initialized";
   }

@@ -97,7 +97,7 @@ class mapgen2 extends Sprite {
 
   // Point distribution
   String pointType = 'Relaxed';
-  int numPoints = 2000;
+  int numPoints = 200;
   
   // GUI for controlling the map generation and view
   Sprite controls = new Sprite();
@@ -126,6 +126,7 @@ class mapgen2 extends Sprite {
 
   mapgen2() {
     addChild(noiseLayer);
+    noiseLayer.alpha = 0.3;
     stagexl_plus.noise(noiseLayer.bitmapData, 555, 128-10, 128+10, 7, true);
     
     //TODO: it seems this feature is not supported in StageXL and propably never will due to the limitations of the HTML Canvas
@@ -169,7 +170,7 @@ class mapgen2 extends Sprite {
         seed = (seed << 4) | islandSeedInput.text.codeUnitAt(i);
       }
       seed %= 100000;
-      variant = 1+(9*new Math.Random().nextDouble()).toInt();
+      variant = 1+random.nextInt(9);
     }
     islandType = newIslandType;
     pointType = newPointType;
@@ -217,17 +218,21 @@ class mapgen2 extends Sprite {
                      map.assignBiomes();
                      drawMap('polygons');
                    });
-/*
+
     commandExecute("Edges...",
                    () {
+      print("Edges. createRoads()");
                      roads.createRoads(map);
-                     // lava.createLava(map, map.mapRandom.nextDouble);
+                     print("createLava()");
+                     lava.createLava(map, map.mapRandom.nextDouble);
+                     print("createWatersheds()");
                      watersheds.createWatersheds(map);
+                     print("buildNoisyEdges()");
                      noisyEdges.buildNoisyEdges(map, lava, map.mapRandom);
                      drawMap(mapMode);
                    });
 
-  */
+/*  */
     }
 
 
@@ -365,13 +370,13 @@ class mapgen2 extends Sprite {
   
   // Helpers for rendering paths
   drawPathForwards(Graphics graphics, List<Point> path) {
-    print("drawPathForwards()");
+    //print("drawPathForwards()");
     for (int i = 0; i < path.length; i++) {
       graphics.lineTo(path[i].x, path[i].y);
     }
   }
   drawPathBackwards(Graphics graphics, List<Point> path) {
-    print("drawPathBackwards()");
+    //print("drawPathBackwards()");
     for (int i = path.length-1; i >= 0; i--) {
       graphics.lineTo(path[i].x, path[i].y);
     }
@@ -458,7 +463,7 @@ class mapgen2 extends Sprite {
 
   // Draw the map in the current map mode
   drawMap(String mode) {
-    print("drawMap()");
+    print("drawMap() mode:$mode");
     graphicsReset();
     noiseLayer.visible = true;
     
@@ -483,7 +488,7 @@ class mapgen2 extends Sprite {
     } else if (mode == 'moisture') {
       renderPolygons(graphics, _moistureGradientColors, 'moisture', null);
     }
-
+/*
     if (mode != 'slopes' && mode != 'moisture') {
       renderRoads(graphics, _displayColorList);
     }
@@ -493,6 +498,9 @@ class mapgen2 extends Sprite {
     if (mode != 'slopes' && mode != 'moisture') {
       renderBridges(graphics);
     }
+    
+     */
+    print("Done drawMap()");
   }
   
   // Render the interior of polygons
@@ -510,7 +518,7 @@ class mapgen2 extends Sprite {
         for(r in p.neighbors) {
             Edge edge = map.lookupEdgeFromCenter(p, r);
             int color = p.biome.color != null ? p.biome.color : 0;
-            if (colors!= null) {
+            if (colorOverrideFunction != null) {
               color = colorOverrideFunction(color, p, r, edge);
             }
 
@@ -547,7 +555,7 @@ class mapgen2 extends Sprite {
               // We pick the midpoint elevation/moisture between
               // corners instead of between polygon centers because
               // the resulting gradients tend to be smoother.
-//              Point midpoint = edge.midpoint;
+              Point midpoint = edge.midpoint;
               /* TODO: reimplement
               num midpointAttr = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
               
@@ -566,6 +574,7 @@ class mapgen2 extends Sprite {
                 
                */
             } else {
+              graphics.beginPath();
               drawPath0();
               drawPath1();
               graphics.fillColor(color);
@@ -659,8 +668,8 @@ class mapgen2 extends Sprite {
                     A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
                     B = addVectorToPoint(normalTowards(edge2, p.point, d), edge2.midpoint);
                     C = Point.interpolate(A, B, 0.5);
-                    graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
                     graphics.beginPath();
+                    graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
                     graphics.quadraticCurveTo(A.x, A.y, C.x, C.y);
                     graphics.strokeColor(roads.road[edge1.index].color, 1.1);
                     graphics.beginPath();
@@ -677,8 +686,8 @@ class mapgen2 extends Sprite {
                 if (roads.road[edge1.index] > 0) {
                   d = 0.25 * (edge1.midpoint - p.point).magnitude;
                   A = addVectorToPoint(normalTowards(edge1, p.point, d), edge1.midpoint);
-                  graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
                   graphics.beginPath();
+                  graphics.moveTo(edge1.midpoint.x, edge1.midpoint.y);
                   graphics.quadraticCurveTo(A.x, A.y, p.point.x, p.point.y);
                   graphics.strokeColor(roads.road[edge1.index].colors, 1.4);
                 }
@@ -733,9 +742,9 @@ class mapgen2 extends Sprite {
               continue;
             }
             
+            graphics.beginPath();
             graphics.moveTo(noisyEdges.path0[edge.index][0].x,
                             noisyEdges.path0[edge.index][0].y);
-            graphics.beginPath();
             drawPathForwards(graphics, noisyEdges.path0[edge.index]);
             drawPathBackwards(graphics, noisyEdges.path1[edge.index]);
             graphics.strokeColor(color, width);
@@ -843,8 +852,8 @@ class mapgen2 extends Sprite {
           w0 = watersheds.watersheds[edge.d0.index];
           w1 = watersheds.watersheds[edge.d1.index];
           if (w0 != w1) {
-            graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
             graphics.beginPath();
+            graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
             graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
             graphics.strokeColor((0xff * 0.1*Math.sqrt((map.corners[w0].watershed_size != null ? map.corners[w0].watershed_size : 1) + (map.corners[w1].watershed.watershed_size != null ? map.corners[w1].watershed.watershed_size : 1))).toInt() << 24, 3.5);
           }
@@ -853,8 +862,8 @@ class mapgen2 extends Sprite {
 
     for(edge in map.edges) {
         if (edge.river != null) {
-          graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
           graphics.beginPath();
+          graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
           graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
           graphics.strokeColor(0xff6699ff);
         }

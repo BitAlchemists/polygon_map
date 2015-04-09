@@ -10,11 +10,11 @@ class Roads {
  // The road array marks the edges that are roads.  The mark is 1,
  // 2, or 3, corresponding to the three contour levels. Note that
  // these are sparse arrays, only filled in where there are roads.
- List road;  // edge index -> int contour level
+ Map road;  // edge index -> int contour level
  Map<int, List> roadConnections;  // center index -> array of Edges with roads
 
  Roads() {
-   road = [];
+   road = {};
    roadConnections = {};
  }
 
@@ -38,7 +38,7 @@ class Roads {
  
    for(p in map.centers) {
        if (p.coast || p.ocean) {
-         centerContour[p.index] = 1;
+         centerContour[p.index] = 0;
          queue.add(p);
        }
      }
@@ -47,8 +47,8 @@ class Roads {
      p = queue.removeAt(0);
      for(r in p.neighbors) {
          newLevel = centerContour[p.index] != null ? centerContour[p.index] : 0;
-         double elevationTreshold = newLevel < elevationThresholds.length ? elevationThresholds[newLevel] : 0.0;
-         while (r.elevation > elevationTreshold && !r.water) {
+         //double elevationTreshold = newLevel < elevationThresholds.length ? elevationThresholds[newLevel] : 0.0;
+         while (newLevel < elevationThresholds.length && r.elevation > elevationThresholds[newLevel] && !r.water) {
            // NOTE: extend the contour line past bodies of
            // water so that roads don't terminate inside lakes.
            newLevel += 1;
