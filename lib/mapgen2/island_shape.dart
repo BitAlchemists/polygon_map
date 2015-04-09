@@ -43,11 +43,13 @@ static Function makeRadial(int seed){
 
 // The Perlin-based island combines perlin noise with the radius
 static Function makePerlin(int seed){
-  BitmapData perlin = new BitmapData(256, 256);
-  stagexl_plus.perlinNoise(perlin, 64, 64, 8, seed, false, true);
+  int bitmapSize = 8;
+  int octaves = 8;
+  BitmapData perlin = new BitmapData(bitmapSize, bitmapSize);
+  stagexl_plus.perlinNoise(perlin, 64, 64, octaves, seed, false, true);
 
   return (Point q) {
-    num c = (perlin.getPixel(((q.x+1)*128).toInt(), ((q.y+1)*128).toInt()) & 0xff) / 255.0;
+    num c = (perlin.getPixel(((q.x+1)*bitmapSize/2).toInt(), ((q.y+1)*bitmapSize/2).toInt()) & 0xff) / 255.0;
     num threshold = 0.3+0.3*q.magnitude*q.magnitude;
     return c > threshold;
   };

@@ -16,7 +16,7 @@ perlinNoise(stagexl.BitmapData bitmapData, num baseX, num baseY, num numOctaves,
   {    
     for ( int x = 0; x < bitmapData.width; x++ )
     {
-      int value = ((octave(x.toDouble(), y.toDouble()) + 1) / 2 * 255).toInt();
+      int value = ((octave((randomSeed + x).toDouble(), (randomSeed + y).toDouble()) + 1) / 2 * 255).toInt();
       //colors.add(value);
       int color = 0xff << 24 | value << 16 | value << 8 | value;
       bitmapData.setPixel32( x, y, 0xff000000 | color << 16 | color << 8 | color );

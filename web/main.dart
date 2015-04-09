@@ -1,7 +1,7 @@
 import 'dart:html' as html;
 import 'package:stagexl/stagexl.dart';
 import "package:polygon_map/mapgen2/mapgen2.dart";
-//import "package:polygon_map/stagexl_plus/stagexl_plus.dart";
+import "package:polygon_map/stagexl_plus/stagexl_plus.dart";
 
 void main() {
 
@@ -14,7 +14,7 @@ void main() {
   stage.scaleMode = StageScaleMode.NO_SCALE;
   stage.align = StageAlign.TOP_LEFT;
   /*
-  BitmapData perlin = new BitmapData(64,64);
+  BitmapData perlin = new BitmapData(8,8);
   perlinNoise(perlin, 64, 64, 8, 234, false, true);
   Bitmap bitmap = new Bitmap(perlin);
   bitmap.addTo(stage);
