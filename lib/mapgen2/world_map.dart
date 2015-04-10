@@ -128,7 +128,6 @@ class WorldMap {
                delaunay.Voronoi voronoi = new delaunay.Voronoi(points, null, new Rectangle(0, 0, SIZE, SIZE));
                buildGraph(points, voronoi);
                improveCorners();
-               voronoi.dispose();
                voronoi = null;
                points = null;
           }]);
@@ -274,7 +273,7 @@ class WorldMap {
       //Corner q;
       Point point;
       //Point other;
-      List<delaunay.Edge> libedges = voronoi.edges();
+      List<delaunay.Edge> libedges = voronoi.edges;
       Map centerLookup = new Map();
 
       // Build Center objects forof the points, and a lookup map

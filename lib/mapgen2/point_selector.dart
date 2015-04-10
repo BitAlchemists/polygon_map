@@ -69,7 +69,6 @@ class PointSelector {
             p.y /= region.length;
             region.removeRange(0, region.length);
           }
-        voronoi.dispose();
       }
       return points;
     };

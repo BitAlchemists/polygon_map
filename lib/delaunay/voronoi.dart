@@ -90,10 +90,10 @@ class Voronoi
     _sitesIndexedByLocation[p] = site;
   }
 
-              List<Edge> edges()
-              {
-                return _edges;
-              }
+  List<Edge> get edges
+  {
+    return _edges;
+  }
         
   List<Point> region(Point p)
   {

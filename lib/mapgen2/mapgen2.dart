@@ -70,7 +70,9 @@ class elevationGradientColors {
   static const int GRADIENT_HIGH = 0xffffff00;
 }
 
-List _elevationGradientColors = [elevationGradientColors.OCEAN, elevationGradientColors.GRADIENT_LOW, elevationGradientColors.GRADIENT_HIGH];
+Map _elevationGradientColors = {
+  "GRADIENT_LOW": elevationGradientColors.GRADIENT_LOW, 
+  "GRADIENT_HIGH": elevationGradientColors.GRADIENT_HIGH };
 
 class moistureGradientColors {
   static const int OCEAN = 0xff4466ff;
@@ -78,7 +80,9 @@ class moistureGradientColors {
   static const int GRADIENT_HIGH = 0xff4466ff;
 }
 
-List _moistureGradientColors = [moistureGradientColors.OCEAN, moistureGradientColors.GRADIENT_LOW, moistureGradientColors.GRADIENT_HIGH];
+Map _moistureGradientColors = {
+  "GRADIENT_LOW": moistureGradientColors.GRADIENT_LOW, 
+  "GRADIENT_HIGH": moistureGradientColors.GRADIENT_HIGH };
 
 addVectorToPoint(Vector V, Point P){
   return new Point(V.x + P.x, V.y + P.y);
@@ -97,7 +101,7 @@ class mapgen2 extends Sprite {
 
   // Point distribution
   String pointType = 'Relaxed';
-  int numPoints = 200;
+  int numPoints = 2000;
   
   // GUI for controlling the map generation and view
   Sprite controls = new Sprite();
@@ -405,18 +409,14 @@ class mapgen2 extends Sprite {
                                         Vector3 v1, Vector3 v2, Vector3 v3,
                                         List colors, drawFunction) {
     // Center of triangle:
-    Vector3 V = v1.add(v2).add(v3);
-    V.scale(1/3.0);
+    Vector3 V = (v1 + v2 + v3) / 3.0;
 
     // Normal of the plane containing the triangle:
-    Vector3 N = v2.sub(v1).cross(v3.sub(v1));
+    Vector3 N = (v2 - v1).cross(v3 - v1);
     N.normalize();
 
     // Gradient vector in x-y plane pointing in the direction of increasing z
     Vector3 G = new Vector3(-N.x/N.z, -N.y/N.z, 0.0);
-
-    // Center of the color gradient
-    Vector3 C = new Vector3(V.x - G.x*((V.z-0.5)/G.length/G.length), V.y - G.y*((V.z-0.5)/G.length/G.length), 0.0);
 
     graphics.beginPath();
     drawFunction();
@@ -440,7 +440,28 @@ class mapgen2 extends Sprite {
     } else {
       // The gradient box is weird to set up, so we let Flash set up
       // a basic matrix and then we alter it:
-      /** TODO: reimplement
+      
+      // Center of the color gradient
+      Vector3 C = new Vector3(V.x - G.x*((V.z-0.5)/G.length/G.length), V.y - G.y*((V.z-0.5)/G.length/G.length), 0.0);
+      
+      Quaternion q = new Quaternion.axisAngle(new Vector3(0.0, 0.0, 1.0), Math.atan2(G.y, G.x));
+      
+      Vector3 gradientStart = new Vector3(-0.5*(1/G.length),-0.5*(1/G.length),0.0);
+      q.rotate(gradientStart);
+      gradientStart += C;
+      
+      Vector3 gradientStop = new Vector3(0.5*(1/G.length),0.5*(1/G.length),0.0);
+      q.rotate(gradientStop);
+      gradientStop += C;      
+      
+      GraphicsGradient gradient = new GraphicsGradient.linear(gradientStart.x, gradientStart.y, gradientStop.x, gradientStop.y);
+
+      for(int i = 0; i < colors.length; i++){
+        gradient.addColorStop(i.toDouble() / (colors.length-1), colors[i]);        
+      }
+      graphics.fillGradient(gradient);
+      
+      /* This was the actionscript code equivalent
       Matrix m = new Matrix.fromIdentity();
       m.createGradientBox(1, 1, 0, 0, 0);
       m.translate(-0.5, -0.5);
@@ -450,10 +471,6 @@ class mapgen2 extends Sprite {
       List alphas = colors.map((_) { return 1.0; });
       List spread = colors.map((color) { return 255*colors.indexOf(color)/(colors.length-1); });
       */
-      GraphicsGradient gradient = new GraphicsGradient.linear(0,0,G.x,G.y);
-      gradient.addColorStop(0.0, 0xffffffff);
-      gradient.addColorStop(1.0, 0xffff00ff);
-      graphics.fillGradient(gradient);
       //graphics.beginGradientFill(GradientType.LINEAR, colors, alphas, spread, m, SpreadMethod.PAD);
     }
     
@@ -478,15 +495,15 @@ class mapgen2 extends Sprite {
       renderWatersheds(graphics);
       return;
     } else if (mode == 'biome') {
-      renderPolygons(graphics, _displayColorList, null, null);
+      renderPolygons(graphics, null, null, null);
     } else if (mode == 'slopes') {
-      renderPolygons(graphics, _displayColorList, null, colorWithSlope);
+      renderPolygons(graphics, null, null, colorWithSlope);
     } else if (mode == 'smooth') {
-      renderPolygons(graphics, _displayColorList, null, colorWithSmoothColors);
+      renderPolygons(graphics, null, null, colorWithSmoothColors);
     } else if (mode == 'elevation') {
-      renderPolygons(graphics, _elevationGradientColors, 'elevation', null);
+      renderPolygons(graphics, _elevationGradientColors, (v)=>v.elevation, null);
     } else if (mode == 'moisture') {
-      renderPolygons(graphics, _moistureGradientColors, 'moisture', null);
+      renderPolygons(graphics, _moistureGradientColors, (v)=>v.moisture, null);
     }
 /*
     if (mode != 'slopes' && mode != 'moisture') {
@@ -504,7 +521,7 @@ class mapgen2 extends Sprite {
   }
   
   // Render the interior of polygons
-  renderPolygons(Graphics graphics, List colors, String gradientFillProperty, colorOverrideFunction) {
+  renderPolygons(Graphics graphics, Map colors, Function gradientFillProperty, colorOverrideFunction) {
     Center p;
     Center r;
 
@@ -556,23 +573,27 @@ class mapgen2 extends Sprite {
               // corners instead of between polygon centers because
               // the resulting gradients tend to be smoother.
               Point midpoint = edge.midpoint;
-              /* TODO: reimplement
-              num midpointAttr = 0.5*(corner0[gradientFillProperty]+corner1[gradientFillProperty]);
+              
+              double corner0Level = gradientFillProperty(corner0);
+              double corner1Level = gradientFillProperty(corner1);
+              double pLevel = gradientFillProperty(p);
+              
+              num midpointAttr = 0.5*(corner0Level+corner1Level);
               
               drawGradientTriangle
                 (graphics,
-                 new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
-                 new Vector3(corner0.point.x, corner0.point.y, corner0[gradientFillProperty]),
+                 new Vector3(p.point.x, p.point.y, pLevel),
+                 new Vector3(corner0.point.x.toDouble(), corner0.point.y.toDouble(), corner0Level),
                  new Vector3(midpoint.x, midpoint.y, midpointAttr),
-                 [displayColors.GRADIENT_LOW, displayColors.GRADIENT_HIGH], drawPath0);
+                 [colors["GRADIENT_LOW"], colors["GRADIENT_HIGH"]], drawPath0);
               drawGradientTriangle
                 (graphics,
-                 new Vector3(p.point.x, p.point.y, p[gradientFillProperty]),
+                 new Vector3(p.point.x, p.point.y, pLevel),
                  new Vector3(midpoint.x, midpoint.y, midpointAttr),
-                 new Vector3(corner1.point.x, corner1.point.y, corner1[gradientFillProperty]),
-                 [displayColors.GRADIENT_LOW, displayColors.GRADIENT_HIGH], drawPath1);
+                 new Vector3(corner1.point.x.toDouble(), corner1.point.y.toDouble(), corner1Level),
+                 [colors["GRADIENT_LOW"], colors["GRADIENT_HIGH"]], drawPath1);
                 
-               */
+               
             } else {
               graphics.beginPath();
               drawPath0();
@@ -861,7 +882,7 @@ class mapgen2 extends Sprite {
       }
 
     for(edge in map.edges) {
-        if (edge.river != null) {
+        if (edge.river != null && edge.v0 != null && edge.v1 != null) {
           graphics.beginPath();
           graphics.moveTo(edge.v0.point.x, edge.v0.point.y);
           graphics.lineTo(edge.v1.point.x, edge.v1.point.y);
